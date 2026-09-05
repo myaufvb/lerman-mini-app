@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: lerman-mini-app
+    env: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_CHAT_ID
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: UPTIME_INTERVAL_MS
+        value: 60000

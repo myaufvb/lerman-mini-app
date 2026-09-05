@@ -1,0 +1,21 @@
+{
+  "name": "lerman-mini-app",
+  "version": "1.0.0",
+  "description": "Lerman Telegram Mini App & Cyber Monitoring System",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "render-build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
+    "build": "cd frontend && npm run build",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev"
+  },
+  "keywords": [
+    "telegram-mini-app",
+    "monitoring",
+    "vault",
+    "cybersecurity",
+    "render"
+  ],
+  "author": "Lerman",
+  "license": "MIT"
+}
