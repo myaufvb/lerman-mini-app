@@ -14,6 +14,17 @@ if (!fs.existsSync(DATA_DIR)) {
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
 const defaultData = {
+  users: [
+    {
+      id: 'usr-admin',
+      login: 'admin',
+      phone: '+79990000000',
+      password: 'admin',
+      name: 'Lerman Admin',
+      telegramId: '',
+      createdAt: new Date().toISOString()
+    }
+  ],
   projects: [
     {
       id: 'proj-1',

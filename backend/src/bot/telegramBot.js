@@ -7,37 +7,43 @@ class TelegramBotManager {
     this.bot = null;
     this.adminChatId = config.adminChatId || db.getSettings()?.adminChatId || '';
     this.appUrl = config.appUrl;
+    this.userStates = new Map(); // chatId -> { step, phone, name }
     this.init();
   }
 
   init() {
     if (!config.botToken) {
-      console.log('ℹ️ [TELEGRAM BOT] Токен бота не указан в .env. Бот работает в режиме эмуляции (уведомления пишутся в консоль и сохраняются в логи).');
+      console.log('ℹ️ [TELEGRAM BOT] Токен бота не указан в .env. Бот работает в режиме эмуляции.');
       return;
     }
 
     try {
       this.bot = new Telegraf(config.botToken);
 
+      // 1. Command /start
       this.bot.start((ctx) => {
         const chatId = ctx.chat.id;
         console.log(`👤 Пользователь запустил бота. Chat ID: ${chatId}`);
-        
+
         // Auto-set adminChatId
         this.adminChatId = chatId.toString();
         db.updateSettings({ adminChatId: this.adminChatId });
-        console.log(`✅ Chat ID ${chatId} сохранен как ADMIN_CHAT_ID.`);
+
+        this.userStates.delete(chatId);
 
         const miniAppUrl = this.appUrl;
 
         ctx.reply(
           `🛡️ *Добро пожаловать в Lerman Cyber Monitor & Mini App!*\n\n` +
-          `Ваш персональный центр управления всеми проектами, паролями, медиа и мониторингом.\n\n` +
-          `🆔 Ваш Chat ID: \`${chatId}\`\n\n` +
-          `Нажмите кнопку ниже, чтобы открыть Mini App прямо в Telegram:`,
+          `Центр управления вашими проектами, зашифрованным хранилищем паролей, фото/видео и поддержкой клиентов.\n\n` +
+          `🔐 *Для входа в Mini App введите данные учетной записи или зарегистрируйтесь:*`,
           {
             parse_mode: 'Markdown',
             ...Markup.inlineKeyboard([
+              [
+                Markup.button.callback('🔑 Войти', 'flow_login'),
+                Markup.button.callback('📝 Зарегистрироваться', 'flow_register')
+              ],
               [Markup.button.webApp('🚀 Открыть Lerman Mini App', miniAppUrl)],
               [Markup.button.callback('📊 Статус систем', 'cmd_status')]
             ])
@@ -45,6 +51,217 @@ class TelegramBotManager {
         );
       });
 
+      // 2. Action: Register flow
+      this.bot.action('flow_register', async (ctx) => {
+        const chatId = ctx.chat.id;
+        this.userStates.set(chatId, { step: 'REG_CONTACT' });
+        await ctx.answerCbQuery();
+
+        await ctx.reply(
+          `📱 *Шаг 1 из 2: Подтверждение номера*\n\n` +
+          `Для быстрой регистрации нажмите большую кнопку внизу экрана:\n` +
+          `👉 *«📱 Поделиться контактом»*\n\n` +
+          `_Ваш номер будет использоваться как логин для входа в Mini App._`,
+          {
+            parse_mode: 'Markdown',
+            ...Markup.keyboard([
+              [Markup.button.contactRequest('📱 Поделиться контактом')]
+            ]).resize().oneTime()
+          }
+        );
+      });
+
+      // 3. Action: Login flow
+      this.bot.action('flow_login', async (ctx) => {
+        const chatId = ctx.chat.id;
+        this.userStates.set(chatId, { step: 'LOGIN_WAIT' });
+        await ctx.answerCbQuery();
+
+        await ctx.reply(
+          `🔑 *Вход в систему Lerman Mini App*\n\n` +
+          `Выберите удобный для вас способ:\n\n` +
+          `1️⃣ Нажмите кнопку *«📱 Прислать номер»* внизу — бот автоматически найдет ваш аккаунт и пришлет ваш логин и пароль.\n\n` +
+          `2️⃣ Либо отправьте ваш *Логин* и *Пароль* прямо сюда в чат через пробел (например: \`admin 12345\`).`,
+          {
+            parse_mode: 'Markdown',
+            ...Markup.keyboard([
+              [Markup.button.contactRequest('📱 Прислать номер')]
+            ]).resize().oneTime()
+          }
+        );
+      });
+
+      // 4. Contact handler (User shares phone)
+      this.bot.on('contact', async (ctx) => {
+        const chatId = ctx.chat.id;
+        const contact = ctx.message.contact;
+        let phone = contact.phone_number;
+        if (!phone.startsWith('+')) phone = '+' + phone;
+
+        const state = this.userStates.get(chatId) || { step: 'LOGIN_WAIT' };
+        const users = db.getCollection('users') || [];
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+
+        // Check if registration flow
+        if (state.step === 'REG_CONTACT') {
+          // Check if already registered
+          const existing = users.find(u => u.phone && u.phone.replace(/[^0-9]/g, '') === cleanPhone);
+          if (existing) {
+            this.userStates.delete(chatId);
+            return ctx.reply(
+              `ℹ️ *Вы уже зарегистрированы в системе!*\n\n` +
+              `👤 *Логин:* \`${existing.login}\`\n` +
+              `🔑 *Пароль:* \`${existing.password}\`\n\n` +
+              `Скопируйте их и вставьте во вкладке *«Вход»* в приложении:`,
+              {
+                parse_mode: 'Markdown',
+                ...Markup.removeKeyboard(),
+                ...Markup.inlineKeyboard([
+                  [Markup.button.webApp('🚀 Открыть Lerman Mini App', this.appUrl)]
+                ])
+              }
+            );
+          }
+
+          // Move to Step 2: Ask for password
+          this.userStates.set(chatId, {
+            step: 'REG_PASSWORD',
+            phone,
+            name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Пользователь'
+          });
+
+          return ctx.reply(
+            `✅ *Номер ${phone} успешно подтвержден!*\n\n` +
+            `🔒 *Шаг 2 из 2:* Теперь придумайте и напишите сюда в чат *пароль* для входа:`,
+            {
+              parse_mode: 'Markdown',
+              ...Markup.removeKeyboard()
+            }
+          );
+        }
+
+        // Otherwise it's Login flow (or user sent contact)
+        const foundUser = users.find(u => u.phone && u.phone.replace(/[^0-9]/g, '') === cleanPhone);
+        this.userStates.delete(chatId);
+
+        if (foundUser) {
+          return ctx.reply(
+            `✅ *Ваш аккаунт успешно найден!*\n\n` +
+            `Ваши данные для входа в Lerman Mini App:\n` +
+            `👤 *Логин:* \`${foundUser.login}\`\n` +
+            `🔑 *Пароль:* \`${foundUser.password}\`\n\n` +
+            `_Скопируйте их и вставьте во вкладке «Вход» в приложении:_`,
+            {
+              parse_mode: 'Markdown',
+              ...Markup.removeKeyboard(),
+              ...Markup.inlineKeyboard([
+                [Markup.button.webApp('🚀 Открыть Lerman Mini App', this.appUrl)]
+              ])
+            }
+          );
+        } else {
+          return ctx.reply(
+            `❌ *Пользователь с номером ${phone} не найден.*\n\n` +
+            `Хотите пройти быструю регистрацию прямо сейчас?`,
+            {
+              parse_mode: 'Markdown',
+              ...Markup.removeKeyboard(),
+              ...Markup.inlineKeyboard([
+                [Markup.button.callback('📝 Зарегистрироваться', 'flow_register')]
+              ])
+            }
+          );
+        }
+      });
+
+      // 5. Text message handler (Password input or Login via text)
+      this.bot.on('text', async (ctx, next) => {
+        const text = ctx.message.text.trim();
+        const chatId = ctx.chat.id;
+
+        // Skip commands
+        if (text.startsWith('/')) {
+          return next();
+        }
+
+        const state = this.userStates.get(chatId);
+
+        // A) User is entering password for registration
+        if (state && state.step === 'REG_PASSWORD') {
+          const password = text;
+          const phone = state.phone;
+          const login = phone; // Login is phone number
+
+          db.insert('users', {
+            login,
+            phone,
+            password,
+            name: state.name || ctx.from.first_name || 'Пользователь',
+            telegramId: chatId.toString()
+          });
+
+          this.userStates.delete(chatId);
+
+          return ctx.reply(
+            `🎉 *Регистрация успешно завершена!*\n\n` +
+            `Ваши персональные данные для входа:\n` +
+            `👤 *Логин:* \`${login}\`\n` +
+            `🔑 *Пароль:* \`${password}\`\n\n` +
+            `Нажмите кнопку ниже, чтобы открыть Mini App и ввести эти данные во вкладке *«Вход»*:`,
+            {
+              parse_mode: 'Markdown',
+              ...Markup.inlineKeyboard([
+                [Markup.button.webApp('🚀 Открыть Lerman Mini App', this.appUrl)]
+              ])
+            }
+          );
+        }
+
+        // B) User typed login and password in chat (e.g. "admin 12345")
+        if (state && state.step === 'LOGIN_WAIT') {
+          const parts = text.split(/\s+/);
+          if (parts.length >= 2) {
+            const [enteredLogin, enteredPass] = parts;
+            const users = db.getCollection('users') || [];
+            const user = users.find(u => 
+              (u.login?.toLowerCase() === enteredLogin.toLowerCase() || u.phone === enteredLogin) &&
+              u.password === enteredPass
+            );
+
+            this.userStates.delete(chatId);
+
+            if (user) {
+              return ctx.reply(
+                `✅ *Авторизация успешна!*\n\n` +
+                `👤 *Логин:* \`${user.login}\`\n` +
+                `🔑 *Пароль:* \`${user.password}\`\n\n` +
+                `Используйте их для входа в Mini App:`,
+                {
+                  parse_mode: 'Markdown',
+                  ...Markup.removeKeyboard(),
+                  ...Markup.inlineKeyboard([
+                    [Markup.button.webApp('🚀 Открыть Lerman Mini App', this.appUrl)]
+                  ])
+                }
+              );
+            } else {
+              return ctx.reply(
+                `❌ Неверный логин или пароль.\n\nПопробуйте снова или зарегистрируйтесь:`,
+                {
+                  parse_mode: 'Markdown',
+                  ...Markup.inlineKeyboard([
+                    [Markup.button.callback('📝 Зарегистрироваться', 'flow_register')]
+                  ])
+                }
+              );
+            }
+          }
+        }
+
+        return next();
+      });
+
+      // Commands
       this.bot.command('status', (ctx) => this.handleStatusCommand(ctx));
       this.bot.action('cmd_status', (ctx) => this.handleStatusCommand(ctx));
 
@@ -145,9 +362,6 @@ class TelegramBotManager {
     }
   }
 
-  /**
-   * Отправка уведомления о новом запросе поддержки от клиента
-   */
   async notifySupportTicket(ticket, project) {
     const projectName = project ? project.name : 'Неизвестный проект';
     const message = 
@@ -170,9 +384,6 @@ class TelegramBotManager {
     return this.sendToAdmin(message, Markup.inlineKeyboard(buttons));
   }
 
-  /**
-   * Уведомление об изменении статуса доступности (Uptime / Downtime)
-   */
   async notifyUptimeChange(project, isOnline, errorOrLatency) {
     let message = '';
     if (!isOnline) {
@@ -197,9 +408,6 @@ class TelegramBotManager {
     return this.sendToAdmin(message, Markup.inlineKeyboard(buttons));
   }
 
-  /**
-   * Уведомление об обновлении приложения / проекта
-   */
   async notifyAppUpdate(projectName, version, releaseNotes) {
     const message = 
       `🚀 *НОВОЕ ОБНОВЛЕНИЕ РЕЛИЗА!*\n\n` +
@@ -216,9 +424,6 @@ class TelegramBotManager {
     return this.sendToAdmin(message, Markup.inlineKeyboard(buttons));
   }
 
-  /**
-   * Универсальное уведомление из другого проекта по API
-   */
   async notifyExternalEvent(projectName, title, body, level = 'info') {
     const icon = level === 'danger' || level === 'error' ? '🔴' : level === 'warning' ? '🟡' : 'ℹ️';
     const message = 

@@ -15,6 +15,7 @@ import { ticketsController } from './controllers/ticketsController.js';
 import { secretsController } from './controllers/secretsController.js';
 import { settingsController } from './controllers/settingsController.js';
 import { webhookController } from './controllers/webhookController.js';
+import { authController } from './controllers/authController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +30,10 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(config.uploadDir));
 
 // --- API ROUTES ---
+
+// Auth
+app.post('/api/auth/login', authController.login);
+app.post('/api/auth/register', authController.register);
 
 // Healthcheck
 app.get('/api/health', (req, res) => {

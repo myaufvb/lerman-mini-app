@@ -11,6 +11,7 @@ import { MediaView } from './pages/MediaView';
 import { TicketsView } from './pages/TicketsView';
 import { IntegrationView } from './pages/IntegrationView';
 import { SettingsView } from './pages/SettingsView';
+import { AuthView } from './pages/AuthView';
 
 // Modals
 import { PinModal } from './components/PinModal';
@@ -23,6 +24,28 @@ import { NewTicketModal } from './components/NewTicketModal';
 
 export default function App() {
   const { user, isInsideTelegram, haptic } = useTelegram();
+
+  // Auth State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lerman_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const handleLoginSuccess = (userData, token) => {
+    setCurrentUser(userData);
+    localStorage.setItem('lerman_user', JSON.stringify(userData));
+    localStorage.setItem('lerman_token', token);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('lerman_user');
+    localStorage.removeItem('lerman_token');
+  };
 
   // App Data State
   const [projects, setProjects] = useState([]);
@@ -151,89 +174,100 @@ export default function App() {
         }}
       />
 
-      {/* Top Navbar */}
-      <Navbar
-        user={user}
-        isInsideTelegram={isInsideTelegram}
-        hasMasterPin={settings.hasMasterPin}
-        isVaultUnlocked={isVaultUnlocked}
-        onLockVault={() => setIsVaultUnlocked(false)}
-        onOpenWallpaperModal={() => setIsWallpaperModalOpen(true)}
-        onRefresh={loadData}
-        isLoading={isLoading}
-      />
-
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
-        {activeTab === 'dashboard' && (
-          <DashboardView
-            projects={projects}
-            onRefresh={loadData}
-            onOpenNewProject={() => setIsNewProjectModalOpen(true)}
-            onSelectProject={() => {}}
-            onHaptic={haptic}
-          />
-        )}
-
-        {activeTab === 'vault' && (
-          <VaultView
-            credentials={credentials}
-            projects={projects}
-            isVaultUnlocked={isVaultUnlocked}
+      {/* If not authenticated, show AuthView */}
+      {!currentUser ? (
+        <AuthView onLoginSuccess={handleLoginSuccess} onHaptic={haptic} />
+      ) : (
+        <>
+          {/* Top Navbar */}
+          <Navbar
+            user={user}
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            isInsideTelegram={isInsideTelegram}
             hasMasterPin={settings.hasMasterPin}
-            onRequestUnlock={() => setIsPinModalOpen(true)}
-            onOpenNewCred={() => setIsNewCredModalOpen(true)}
-            onOpenOneTimeSecret={() => setIsOneTimeSecretModalOpen(true)}
-            onRefresh={loadData}
-            onHaptic={haptic}
-          />
-        )}
-
-        {activeTab === 'media' && (
-          <MediaView
-            media={media}
-            projects={projects}
-            onSelectMedia={(item) => setSelectedMedia(item)}
-            onRefresh={loadData}
-            onHaptic={haptic}
-          />
-        )}
-
-        {activeTab === 'tickets' && (
-          <TicketsView
-            tickets={tickets}
-            projects={projects}
-            onOpenNewTicket={() => setIsNewTicketModalOpen(true)}
-            onRefresh={loadData}
-            onHaptic={haptic}
-          />
-        )}
-
-        {activeTab === 'integration' && (
-          <IntegrationView
-            projects={projects}
-            onHaptic={haptic}
-          />
-        )}
-
-        {activeTab === 'settings' && (
-          <SettingsView
-            settings={settings}
-            onSettingsUpdate={handleSettingsUpdate}
+            isVaultUnlocked={isVaultUnlocked}
+            onLockVault={() => setIsVaultUnlocked(false)}
             onOpenWallpaperModal={() => setIsWallpaperModalOpen(true)}
-            onHaptic={haptic}
+            onRefresh={loadData}
+            isLoading={isLoading}
           />
-        )}
-      </main>
 
-      {/* Floating Bottom Nav */}
-      <BottomNav
-        activeTab={activeTab}
-        setActiveTab={handleTabChange}
-        unreadTicketsCount={unreadTickets}
-        offlineProjectsCount={offlineProjects}
-        onHaptic={() => haptic.selection()}
-      />
+          {/* Main Content Area */}
+          <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+            {activeTab === 'dashboard' && (
+              <DashboardView
+                projects={projects}
+                onRefresh={loadData}
+                onOpenNewProject={() => setIsNewProjectModalOpen(true)}
+                onSelectProject={() => {}}
+                onHaptic={haptic}
+              />
+            )}
+
+            {activeTab === 'vault' && (
+              <VaultView
+                credentials={credentials}
+                projects={projects}
+                isVaultUnlocked={isVaultUnlocked}
+                hasMasterPin={settings.hasMasterPin}
+                onRequestUnlock={() => setIsPinModalOpen(true)}
+                onOpenNewCred={() => setIsNewCredModalOpen(true)}
+                onOpenOneTimeSecret={() => setIsOneTimeSecretModalOpen(true)}
+                onRefresh={loadData}
+                onHaptic={haptic}
+              />
+            )}
+
+            {activeTab === 'media' && (
+              <MediaView
+                media={media}
+                projects={projects}
+                onSelectMedia={(item) => setSelectedMedia(item)}
+                onRefresh={loadData}
+                onHaptic={haptic}
+              />
+            )}
+
+            {activeTab === 'tickets' && (
+              <TicketsView
+                tickets={tickets}
+                projects={projects}
+                onOpenNewTicket={() => setIsNewTicketModalOpen(true)}
+                onRefresh={loadData}
+                onHaptic={haptic}
+              />
+            )}
+
+            {activeTab === 'integration' && (
+              <IntegrationView
+                projects={projects}
+                onHaptic={haptic}
+              />
+            )}
+
+            {activeTab === 'settings' && (
+              <SettingsView
+                settings={settings}
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                onSettingsUpdate={handleSettingsUpdate}
+                onOpenWallpaperModal={() => setIsWallpaperModalOpen(true)}
+                onHaptic={haptic}
+              />
+            )}
+          </main>
+
+          {/* Floating Bottom Nav */}
+          <BottomNav
+            activeTab={activeTab}
+            setActiveTab={handleTabChange}
+            unreadTicketsCount={unreadTickets}
+            offlineProjectsCount={offlineProjects}
+            onHaptic={() => haptic.selection()}
+          />
+        </>
+      )}
 
       {/* Modals */}
       <PinModal
