@@ -1,0 +1,115 @@
+{
+  "projects": [
+    {
+      "id": "proj-1",
+      "name": "РКС Кибербезопасность",
+      "slug": "rks-security",
+      "description": "Система контроля периметра, аудит уязвимостей и защита API",
+      "url": "https://google.com",
+      "status": "online",
+      "latencyMs": 875,
+      "lastChecked": "2026-09-05T14:36:32.790Z",
+      "version": "v2.4.1",
+      "apiKey": "rks_live_8cfe5cdd3f6fb9708cc217e1",
+      "createdAt": "2026-09-05T14:10:49.693Z",
+      "statusCode": 200,
+      "lastError": null,
+      "updatedAt": "2026-09-05T14:36:32.792Z"
+    },
+    {
+      "id": "proj-2",
+      "name": "Lerman Mobile Client",
+      "slug": "lerman-mobile",
+      "description": "Мобильное приложение для клиентов iOS / Android",
+      "url": "https://github.com",
+      "status": "online",
+      "latencyMs": 409,
+      "lastChecked": "2026-09-05T14:36:33.203Z",
+      "version": "v1.1.0",
+      "apiKey": "mob_live_f86004600c8f1fc4bbaaca29",
+      "createdAt": "2026-09-05T14:10:49.693Z",
+      "statusCode": 200,
+      "lastError": null,
+      "updatedAt": "2026-09-05T14:36:33.205Z"
+    }
+  ],
+  "credentials": [
+    {
+      "id": "cred-1",
+      "projectId": "proj-1",
+      "title": "Root SSH Server",
+      "login": "admin_lerman",
+      "passwordEncrypted": "c871239bf0192",
+      "iv": "",
+      "authTag": "",
+      "url": "ssh://194.87.12.99:22",
+      "category": "server",
+      "notes": "Главный боевой сервер продакшена. Доступ только по ключу/паролю",
+      "createdAt": "2026-09-05T14:10:49.693Z"
+    }
+  ],
+  "media": [
+    {
+      "id": "med-1",
+      "projectId": "proj-1",
+      "filename": "sample-diagram.png",
+      "originalName": "Схема_архитектуры.png",
+      "mimeType": "image/png",
+      "size": 1048576,
+      "type": "image",
+      "url": "/uploads/sample-diagram.png",
+      "caption": "Диаграмма сетевой инфраструктуры RKS",
+      "createdAt": "2026-09-05T14:10:49.693Z"
+    }
+  ],
+  "tickets": [
+    {
+      "id": "tkt-101",
+      "projectId": "proj-1",
+      "clientName": "Алексей (Инженер безопасности)",
+      "clientContact": "@alex_sec",
+      "message": "Привет! Заметили всплеск 403 на эндпоинте авторизации, пофиксите пожалуйста конфигурацию WAF",
+      "status": "new",
+      "priority": "high",
+      "createdAt": "2026-09-05T13:10:49.693Z"
+    }
+  ],
+  "secrets": [],
+  "wallpapers": [
+    {
+      "id": "wp-cyber-grid",
+      "name": "Cyberpunk Neon Matrix",
+      "type": "gradient",
+      "url": "radial-gradient(circle at 50% 20%, #0d1b2a 0%, #050811 100%)",
+      "preview": "linear-gradient(135deg, #0d1b2a, #050811)",
+      "isDefault": true
+    },
+    {
+      "id": "wp-neon-glow",
+      "name": "Neon Cyber Blue",
+      "type": "gradient",
+      "url": "linear-gradient(135deg, #070e20 0%, #0a192f 50%, #020c1b 100%)",
+      "preview": "linear-gradient(135deg, #070e20, #0a192f)",
+      "isDefault": false
+    },
+    {
+      "id": "wp-dark-obsidian",
+      "name": "Deep Obsidian Glass",
+      "type": "gradient",
+      "url": "radial-gradient(ellipse at bottom, #111827 0%, #030712 100%)",
+      "preview": "linear-gradient(135deg, #111827, #030712)",
+      "isDefault": false
+    }
+  ],
+  "settings": {
+    "masterPinHash": "",
+    "hasMasterPin": false,
+    "activeWallpaperId": "wp-cyber-grid",
+    "customWallpaperUrl": "",
+    "customWallpaperType": "gradient",
+    "glassBlur": 16,
+    "cardOpacity": 85,
+    "notificationsEnabled": true
+  },
+  "logs": []
+}

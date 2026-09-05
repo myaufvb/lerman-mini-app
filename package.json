@@ -1,25 +1,21 @@
 {
-  "name": "lerman-frontend",
-  "private": true,
+  "name": "lerman-mini-app",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Lerman Telegram Mini App & Cyber Monitoring System",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "node backend/src/server.js",
+    "render-build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
+    "build": "cd frontend && npm run build",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev"
   },
-  "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "lucide-react": "^0.428.0"
-  },
-  "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.41",
-    "tailwindcss": "^3.4.10",
-    "vite": "^5.4.1"
-  }
+  "keywords": [
+    "telegram-mini-app",
+    "monitoring",
+    "vault",
+    "cybersecurity",
+    "render"
+  ],
+  "author": "Lerman",
+  "license": "MIT"
 }
