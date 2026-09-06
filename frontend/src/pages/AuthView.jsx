@@ -203,11 +203,11 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
         }}
       />
 
-      {/* Main Container: Desk Lamp on the Left, Login Form on the Right */}
-      <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-14 w-full max-w-4xl py-6">
+      {/* Main Container: Pendant Lamp on the Left, Login Form on the Right */}
+      <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-10 md:gap-20 w-full max-w-5xl py-6 md:py-10">
         
-        {/* 1. The Desk Lamp with Pull Cord */}
-        <div className="flex-shrink-0 flex flex-col items-center">
+        {/* 1. The Pendant Lamp with Pull Cord (Scaled up significantly on PC, comfortable on phones) */}
+        <div className="flex-shrink-0 flex flex-col items-center md:scale-[1.38] lg:scale-[1.48] md:mr-10 md:-mt-4 origin-center transition-transform duration-300">
           <InteractivePullLamp
             isOn={isFormVisible}
             onToggle={() => {

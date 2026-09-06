@@ -3,9 +3,16 @@
 @tailwind utilities;
 
 @layer base {
-  body {
+  html,
+  body,
+  #root {
     margin: 0;
     padding: 0;
+    width: 100%;
+    min-height: 100%;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
     -webkit-tap-highlight-color: transparent;
   }
 }

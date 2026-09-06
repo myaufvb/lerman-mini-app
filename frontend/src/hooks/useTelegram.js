@@ -11,6 +11,19 @@ export function useTelegram() {
     if (tg) {
       tg.ready();
       tg.expand();
+
+      // Disable swipe-down gesture that closes the Mini App on Telegram iOS / Android
+      try {
+        if (typeof tg.disableVerticalSwipes === 'function') {
+          tg.disableVerticalSwipes();
+        }
+        if (typeof tg.enableClosingConfirmation === 'function') {
+          tg.enableClosingConfirmation();
+        }
+      } catch (e) {
+        // Ignored on older Telegram client versions
+      }
+
       try {
         tg.setHeaderColor('#070b14');
         tg.setBackgroundColor('#070b14');
