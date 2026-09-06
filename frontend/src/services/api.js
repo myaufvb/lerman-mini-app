@@ -82,6 +82,8 @@ export const api = {
     if (!res.ok) throw new Error(data.error || 'Ошибка загрузки обоев');
     return data;
   },
+  addWallpaperByUrl: (data) => request('/settings/wallpaper-url', { method: 'POST', body: JSON.stringify(data) }),
+  deleteWallpaper: (id) => request(`/settings/wallpaper/${id}`, { method: 'DELETE' }),
 
   // Integrations & Snippets
   getIntegrationGuides: (projectId) => request(`/integration/guides${projectId ? `?projectId=${projectId}` : ''}`)

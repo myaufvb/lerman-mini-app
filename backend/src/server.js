@@ -85,6 +85,8 @@ app.put('/api/settings', settingsController.update);
 app.post('/api/settings/pin', settingsController.setMasterPin);
 app.post('/api/settings/pin/verify', settingsController.verifyMasterPin);
 app.post('/api/settings/wallpaper', upload.single('wallpaper'), settingsController.uploadWallpaper);
+app.post('/api/settings/wallpaper-url', settingsController.addWallpaperByUrl);
+app.delete('/api/settings/wallpaper/:id', settingsController.deleteWallpaper);
 
 // 7. Webhook & Integration API for other projects
 app.post('/api/v1/projects/event', webhookController.handleEvent);

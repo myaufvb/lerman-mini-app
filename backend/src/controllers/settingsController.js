@@ -77,7 +77,8 @@ export const settingsController = {
       return res.status(400).json({ success: false, error: 'Файл обоев не прикреплен' });
     }
 
-    const isVideo = req.file.mimetype.startsWith('video/');
+    const isVideo = (req.file.mimetype && req.file.mimetype.startsWith('video/')) ||
+      Boolean(req.file.originalname && req.file.originalname.match(/\.(mp4|webm|mov|m4v|ogg|ogv)$/i));
     const wallpaperUrl = `/uploads/${req.file.filename}`;
     const wallpaperType = isVideo ? 'video' : 'image';
 
@@ -89,7 +90,7 @@ export const settingsController = {
       isDefault: false
     });
 
-    db.updateSettings({
+    const updatedSettings = db.updateSettings({
       activeWallpaperId: newWp.id,
       customWallpaperUrl: wallpaperUrl,
       customWallpaperType: wallpaperType
@@ -98,7 +99,57 @@ export const settingsController = {
     res.status(201).json({
       success: true,
       wallpaper: newWp,
+      settings: updatedSettings,
       message: 'Обои успешно загружены и применены!'
     });
+  },
+
+  addWallpaperByUrl(req, res) {
+    const { url, name, type } = req.body;
+    if (!url || typeof url !== 'string' || !url.trim()) {
+      return res.status(400).json({ success: false, error: 'Укажите корректную ссылку на обои (URL)' });
+    }
+
+    const cleanUrl = url.trim();
+    const isVideo = type === 'video' || Boolean(cleanUrl.match(/\.(mp4|webm|mov|m4v|ogg)(\?.*)?$/i)) || Boolean(req.body.isVideo);
+    const wallpaperType = isVideo ? 'video' : 'image';
+
+    const newWp = db.insert('wallpapers', {
+      name: name || (isVideo ? 'Живые видео-обои' : 'Кастомные обои'),
+      type: wallpaperType,
+      url: cleanUrl,
+      preview: cleanUrl,
+      isDefault: false
+    });
+
+    const updatedSettings = db.updateSettings({
+      activeWallpaperId: newWp.id,
+      customWallpaperUrl: cleanUrl,
+      customWallpaperType: wallpaperType
+    });
+
+    res.status(201).json({
+      success: true,
+      wallpaper: newWp,
+      settings: updatedSettings,
+      message: 'Живые обои успешно добавлены по ссылке и применены!'
+    });
+  },
+
+  deleteWallpaper(req, res) {
+    const wp = db.findById('wallpapers', req.params.id);
+    if (!wp) {
+      return res.status(404).json({ success: false, error: 'Обои не найдены' });
+    }
+    db.delete('wallpapers', req.params.id);
+    const settings = db.getSettings();
+    if (settings.activeWallpaperId === req.params.id) {
+      db.updateSettings({
+        activeWallpaperId: 'wp-cyber-grid',
+        customWallpaperUrl: '',
+        customWallpaperType: 'gradient'
+      });
+    }
+    res.json({ success: true, message: 'Обои удалены' });
   }
 };
