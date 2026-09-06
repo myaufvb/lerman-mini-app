@@ -397,7 +397,7 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
                     <input
                       type="text"
                       required
-                      placeholder="Lerman_dev или +998..."
+                      placeholder="Логин или номер телефона"
                       value={loginInput}
                       onChange={(e) => setLoginInput(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-300/50 font-mono transition-colors"
@@ -487,7 +487,7 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
                     <div>
                       <input
                         type="tel"
-                        placeholder="Номер телефона (+998...)"
+                        placeholder="Номер телефона"
                         value={regPhone}
                         onChange={(e) => setRegPhone(e.target.value)}
                         className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-300/50 font-mono"

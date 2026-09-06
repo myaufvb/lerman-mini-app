@@ -118,6 +118,10 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
     }
   }, []);
 
+  const dragDistanceRef = useRef(0);
+  const pointerDownPosRef = useRef({ x: 0, y: 0 });
+  const blockClicksUntilRef = useRef(0);
+
   // Pointer down on cord bead or chain
   const handlePointerDown = (e) => {
     e.preventDefault();
@@ -129,6 +133,8 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
 
     isDraggingRef.current = true;
     hasTriggeredRef.current = false;
+    dragDistanceRef.current = 0;
+    pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
     setIsDragging(true);
     setHasTriggeredThisPull(false);
 
@@ -156,6 +162,13 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
     const dx = e.clientX - anchorScreenX;
     const dy = Math.max(15, e.clientY - anchorScreenY);
 
+    // Track total physical movement to distinguish drag from tap
+    const moveDist = Math.hypot(
+      e.clientX - pointerDownPosRef.current.x,
+      e.clientY - pointerDownPosRef.current.y
+    );
+    dragDistanceRef.current = moveDist;
+
     // Calculate angle and clamp to natural pull arc (-65 deg to +65 deg)
     const rawAngle = Math.atan2(dx, dy);
     const clampedAngle = Math.min(Math.max(-1.15, rawAngle), 1.15);
@@ -178,9 +191,10 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
     setAngle(clampedAngle);
     setCordLength(clampedLength);
 
-    // Check pull threshold trigger
-    if (!hasTriggeredRef.current && (clampedLength - REST_LENGTH) >= TRIGGER_DELTA) {
+    // Trigger toggle EXACTLY ONCE when crossing threshold during pull
+    if (!hasTriggeredRef.current && (clampedLength - REST_LENGTH) >= 16) {
       hasTriggeredRef.current = true;
+      blockClicksUntilRef.current = performance.now() + 700; // Block any subsequent click events for 700ms
       setHasTriggeredThisPull(true);
       onHaptic?.impact('heavy');
       playClickSound(isOn ? 'off' : 'on');
@@ -198,46 +212,64 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
     isDraggingRef.current = false;
     setIsDragging(false);
 
-    // If released without pulling far enough, give an impulse
-    if (!hasTriggeredRef.current) {
-      const pulledDist = lengthRef.current - REST_LENGTH;
-      if (pulledDist >= 8) {
-        hasTriggeredRef.current = true;
-        onHaptic?.impact('heavy');
-        playClickSound(isOn ? 'off' : 'on');
-        onToggle();
-      }
+    // If dragged more than 4px, block any synthetic click from the browser
+    if (dragDistanceRef.current > 4) {
+      blockClicksUntilRef.current = Math.max(blockClicksUntilRef.current, performance.now() + 700);
     }
 
-    // Give upward spring velocity
-    lengthVelRef.current = -500;
+    // Give upward spring velocity to rebound
+    lengthVelRef.current = -520;
     runPhysicsLoop();
+
+    // Reset trigger lock after spring settles
+    setTimeout(() => {
+      hasTriggeredRef.current = false;
+    }, 450);
   };
 
-  // Single click fallback on cord or shade: causes a realistic spring-loaded pull & swing
+  // Single click fallback on cord bead: triggers only on pure click (not after drag)
   const handleClickCord = (e) => {
     e.stopPropagation();
-    if (isDraggingRef.current) return;
+    e.preventDefault();
+
+    // Ignore if dragging, if triggered during drag, or during cooldown
+    if (
+      isDraggingRef.current || 
+      hasTriggeredRef.current || 
+      performance.now() < blockClicksUntilRef.current
+    ) {
+      return;
+    }
+
+    blockClicksUntilRef.current = performance.now() + 500;
+    hasTriggeredRef.current = true;
 
     onHaptic?.impact('heavy');
     playClickSound(isOn ? 'off' : 'on');
     onToggle();
 
-    // Inject sudden physical impulse
+    // Inject physical impulse (pull down and let pendulum swing)
     lengthRef.current = REST_LENGTH + 22;
     lengthVelRef.current = -420;
-    omegaRef.current = (Math.random() - 0.5) * 6; // playful side-to-side swing
+    omegaRef.current = (Math.random() - 0.5) * 6;
     runPhysicsLoop();
+
+    setTimeout(() => {
+      hasTriggeredRef.current = false;
+    }, 450);
   };
 
   const handleClickShade = (e) => {
     e.stopPropagation();
+    if (performance.now() < blockClicksUntilRef.current) return;
+    blockClicksUntilRef.current = performance.now() + 400;
+
     onHaptic?.impact('medium');
     playClickSound(isOn ? 'off' : 'on');
     onToggle();
 
-    // Gentle swing impulse on cord when bumping the lamp
-    omegaRef.current = 3.5;
+    // Gentle swing impulse on cord when tapping the shade
+    omegaRef.current = (Math.random() > 0.5 ? 1 : -1) * 3.5;
     runPhysicsLoop();
   };
 
