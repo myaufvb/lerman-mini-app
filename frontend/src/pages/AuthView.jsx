@@ -206,8 +206,8 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
       {/* Main Container: Pendant Lamp on the Left, Login Form on the Right */}
       <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-10 md:gap-20 w-full max-w-5xl py-6 md:py-10">
         
-        {/* 1. The Pendant Lamp with Pull Cord (Scaled up significantly on PC, comfortable on phones) */}
-        <div className="flex-shrink-0 flex flex-col items-center md:scale-[1.38] lg:scale-[1.48] md:mr-10 md:-mt-4 origin-center transition-transform duration-300">
+        {/* 1. The Pendant Lamp with Pull Cord (Scaled up on PC, comfortable on phones) */}
+        <div className="flex-shrink-0 flex flex-col items-center md:scale-[1.22] lg:scale-[1.32] md:mr-8 origin-top transition-transform duration-300">
           <InteractivePullLamp
             isOn={isFormVisible}
             onToggle={() => {
@@ -396,7 +396,12 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
                     </label>
                     <input
                       type="text"
+                      name="auth_account_identifier"
                       required
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      spellCheck="false"
                       placeholder="Логин или номер телефона"
                       value={loginInput}
                       onChange={(e) => setLoginInput(e.target.value)}
@@ -412,6 +417,8 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
+                        name="auth_account_secret"
+                        autoComplete="new-password"
                         placeholder="••••••••"
                         value={passwordInput}
                         onChange={(e) => setPasswordInput(e.target.value)}

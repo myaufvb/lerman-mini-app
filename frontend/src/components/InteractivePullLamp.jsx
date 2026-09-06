@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
-  // Center coordinates of the lamp interior socket
+  // Center coordinates of the lamp interior socket in SVG viewBox (0 0 220 450)
   const ANCHOR_X = 110;
-  const ANCHOR_Y = 175; // bottom opening center
-  const REST_LENGTH = 115;
-  const MAX_STRETCH = 175;
-  const MIN_LENGTH = 80;
+  const ANCHOR_Y = 215; // exact center of the socket pin in the bottom diffuser opening
+  const REST_LENGTH = 145; // matched with photo: cord is ~1.5x shade height
+  const MAX_STRETCH = 210;
+  const MIN_LENGTH = 90;
   const TRIGGER_DELTA = 18;
 
   const [angle, setAngle] = useState(0); // in radians
@@ -124,10 +124,6 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
     e.preventDefault();
     e.stopPropagation();
 
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch (_) {}
-
     isDraggingRef.current = true;
     hasTriggeredRef.current = false;
     dragDistanceRef.current = 0;
@@ -147,77 +143,93 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
     }
   };
 
-  // Pointer drag: rope follows finger/mouse
-  const handlePointerMove = (e) => {
-    if (!isDraggingRef.current || !containerRef.current) return;
+  // Global window listeners for drag: guarantees 100% smooth symmetric tracking everywhere
+  useEffect(() => {
+    if (!isDragging) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const anchorScreenX = rect.left + ANCHOR_X;
-    const anchorScreenY = rect.top + ANCHOR_Y;
+    const handleWindowPointerMove = (e) => {
+      if (!isDraggingRef.current || !containerRef.current) return;
+      try {
+        if (e.cancelable) e.preventDefault();
+      } catch (_) {}
 
-    const dx = e.clientX - anchorScreenX;
-    const dy = Math.max(20, e.clientY - anchorScreenY);
+      const rect = containerRef.current.getBoundingClientRect();
+      const scaleX = rect.width / 220;
+      const scaleY = rect.height / 450;
 
-    const moveDist = Math.hypot(
-      e.clientX - pointerDownPosRef.current.x,
-      e.clientY - pointerDownPosRef.current.y
-    );
-    dragDistanceRef.current = moveDist;
+      const mouseSvgX = (e.clientX - rect.left) / scaleX;
+      const mouseSvgY = (e.clientY - rect.top) / scaleY;
 
-    // Angle calculation (-60 to +60 deg)
-    const rawAngle = Math.atan2(dx, dy);
-    const clampedAngle = Math.min(Math.max(-1.05, rawAngle), 1.05);
+      const dx = mouseSvgX - ANCHOR_X;
+      const dy = Math.max(20, mouseSvgY - ANCHOR_Y);
 
-    // Length calculation with elastic clamping
-    const rawLength = Math.hypot(dx, dy);
-    const clampedLength = Math.min(Math.max(MIN_LENGTH, rawLength), MAX_STRETCH);
+      const moveDist = Math.hypot(
+        e.clientX - pointerDownPosRef.current.x,
+        e.clientY - pointerDownPosRef.current.y
+      );
+      dragDistanceRef.current = moveDist;
 
-    // Capture drag momentum for release
-    const now = performance.now();
-    const timeDelta = (now - lastPointerRef.current.time) / 1000;
-    if (timeDelta > 0.008) {
-      const angleDelta = clampedAngle - angleRef.current;
-      omegaRef.current = Math.min(Math.max(-14, angleDelta / timeDelta), 14);
-      lastPointerRef.current = { x: e.clientX, y: e.clientY, time: now };
-    }
+      // Symmetrical angle calculation (-48 to +48 deg)
+      const rawAngle = Math.atan2(dx, dy);
+      const clampedAngle = Math.min(Math.max(-0.82, rawAngle), 0.82);
 
-    angleRef.current = clampedAngle;
-    lengthRef.current = clampedLength;
-    setAngle(clampedAngle);
-    setCordLength(clampedLength);
+      // Length calculation with elastic clamping
+      const rawLength = Math.hypot(dx, dy);
+      const clampedLength = Math.min(Math.max(MIN_LENGTH, rawLength), MAX_STRETCH);
 
-    // Trigger toggle ONCE when threshold is passed
-    if (!hasTriggeredRef.current && (clampedLength - REST_LENGTH) >= TRIGGER_DELTA) {
-      hasTriggeredRef.current = true;
-      blockClicksUntilRef.current = performance.now() + 700;
-      onHaptic?.impact('heavy');
-      playClickSound(isOn ? 'off' : 'on');
-      onToggle();
-    }
-  };
+      // Capture drag momentum for release
+      const now = performance.now();
+      const timeDelta = (now - lastPointerRef.current.time) / 1000;
+      if (timeDelta > 0.008) {
+        const angleDelta = clampedAngle - angleRef.current;
+        omegaRef.current = Math.min(Math.max(-14, angleDelta / timeDelta), 14);
+        lastPointerRef.current = { x: e.clientX, y: e.clientY, time: now };
+      }
 
-  // Pointer release: release spring & start pendulum swing
-  const handlePointerUp = (e) => {
-    if (!isDraggingRef.current) return;
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch (_) {}
+      angleRef.current = clampedAngle;
+      lengthRef.current = clampedLength;
+      setAngle(clampedAngle);
+      setCordLength(clampedLength);
 
-    isDraggingRef.current = false;
-    setIsDragging(false);
+      // Trigger toggle ONCE when threshold is passed
+      if (!hasTriggeredRef.current && (clampedLength - REST_LENGTH) >= TRIGGER_DELTA) {
+        hasTriggeredRef.current = true;
+        blockClicksUntilRef.current = performance.now() + 700;
+        onHaptic?.impact('heavy');
+        playClickSound(isOn ? 'off' : 'on');
+        onToggle();
+      }
+    };
 
-    if (dragDistanceRef.current > 4) {
-      blockClicksUntilRef.current = Math.max(blockClicksUntilRef.current, performance.now() + 700);
-    }
+    const handleWindowPointerUp = () => {
+      if (!isDraggingRef.current) return;
 
-    // Upward spring rebound velocity
-    lengthVelRef.current = -480;
-    runPhysicsLoop();
+      isDraggingRef.current = false;
+      setIsDragging(false);
 
-    setTimeout(() => {
-      hasTriggeredRef.current = false;
-    }, 450);
-  };
+      if (dragDistanceRef.current > 5) {
+        blockClicksUntilRef.current = Math.max(blockClicksUntilRef.current, performance.now() + 700);
+      }
+
+      // Upward spring rebound velocity
+      lengthVelRef.current = -480;
+      runPhysicsLoop();
+
+      setTimeout(() => {
+        hasTriggeredRef.current = false;
+      }, 450);
+    };
+
+    window.addEventListener('pointermove', handleWindowPointerMove, { passive: false });
+    window.addEventListener('pointerup', handleWindowPointerUp, { passive: false });
+    window.addEventListener('pointercancel', handleWindowPointerUp, { passive: false });
+
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove);
+      window.removeEventListener('pointerup', handleWindowPointerUp);
+      window.removeEventListener('pointercancel', handleWindowPointerUp);
+    };
+  }, [isDragging, isOn, onToggle, onHaptic, playClickSound, runPhysicsLoop, REST_LENGTH, TRIGGER_DELTA, MIN_LENGTH, MAX_STRETCH]);
 
   // Pure click fallback on ring
   const handleClickRing = (e) => {
@@ -279,7 +291,7 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
     <div
       ref={containerRef}
       className="relative select-none flex flex-col items-center justify-start pointer-events-auto"
-      style={{ width: '220px', height: '360px' }}
+      style={{ width: '220px', height: '450px' }}
     >
       {/* 
         ========================================================================
@@ -290,7 +302,6 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
         <div
           className="pointer-events-none absolute -inset-32 sm:-inset-56 transition-opacity duration-500 ease-out z-0 flex items-center justify-center"
           style={{
-            // Completely fades to 0% opacity before the edge
             background: 'radial-gradient(circle at 50% 48%, rgba(255, 235, 170, 0.45) 0%, rgba(255, 220, 130, 0.22) 28%, rgba(255, 190, 80, 0.05) 52%, transparent 70%)',
             opacity: 1
           }}
@@ -300,7 +311,7 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
       {/* Downward Warm Cone of Light illuminating form & surface */}
       {isOn && (
         <div
-          className="pointer-events-none absolute top-[150px] -left-36 -right-36 h-[460px] transition-opacity duration-500 ease-out z-0"
+          className="pointer-events-none absolute top-[170px] -left-36 -right-36 h-[460px] transition-opacity duration-500 ease-out z-0"
           style={{
             background: 'radial-gradient(ellipse at 50% 0%, rgba(255, 242, 195, 0.38) 0%, rgba(255, 215, 115, 0.14) 38%, rgba(255, 190, 75, 0.03) 60%, transparent 72%)',
             opacity: 1
@@ -310,246 +321,264 @@ export function InteractivePullLamp({ isOn, onToggle, onHaptic }) {
 
       {/* 
         ========================================================================
-        2. EXACT PENDANT CEILING LAMP (FROM PHOTO)
-        ========================================================================
-      */}
-      <div className="relative flex flex-col items-center z-10 w-full">
-
-        {/* 2.1 Ceiling Mount Canopy (Черная конусная чаша крепления к потолку) */}
-        <div
-          className="relative z-30 shadow-md"
-          style={{
-            width: '26px',
-            height: '18px',
-            clipPath: 'polygon(0 0, 100% 0, 60% 100%, 40% 100%)',
-            background: 'linear-gradient(to right, #151518 0%, #303238 45%, #18191c 100%)'
-          }}
-        />
-
-        {/* 2.2 Ceiling Cable (Черный подвесной провод) */}
-        <div
-          className="relative z-20"
-          style={{
-            width: '2.5px',
-            height: '68px',
-            background: 'linear-gradient(to right, #111 0%, #333 50%, #111 100%)',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.5)'
-          }}
-        />
-
-        {/* 2.3 Wooden Socket / Neck Cap (Деревянная вставка из светлого дуба) */}
-        <div
-          className="relative z-20 -mb-0.5 shadow-sm"
-          style={{
-            width: '15px',
-            height: '28px',
-            borderRadius: '4px 4px 1px 1px',
-            background: 'linear-gradient(to right, #8a5d2e 0%, #ba8a4d 25%, #dfb778 50%, #ba8a4d 75%, #7a4f24 100%)',
-            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.5)'
-          }}
-        />
-
-        {/* 2.4 Pendant Lampshade SVG (Черный матовый конусный купол + светящееся дно) */}
-        <div
-          onClick={handleClickShade}
-          title="Нажмите на лампу для включения"
-          className="relative cursor-pointer z-20"
-          style={{ width: '190px', height: '115px' }}
-        >
-          <svg
-            viewBox="0 0 190 115"
-            className="w-full h-full overflow-visible drop-shadow-2xl"
-          >
-            <defs>
-              {/* Matte Black Shade Exterior Gradient */}
-              <linearGradient id="matteBlackShade" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#151619" />
-                <stop offset="20%" stopColor="#282a30" />
-                <stop offset="48%" stopColor="#3d4047" />
-                <stop offset="65%" stopColor="#282a30" />
-                <stop offset="100%" stopColor="#121315" />
-              </linearGradient>
-
-              {/* Interior Reflector (Off) */}
-              <radialGradient id="interiorReflectorOff" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#fff8ed" />
-                <stop offset="60%" stopColor="#ebdcc7" />
-                <stop offset="100%" stopColor="#c7b49a" />
-              </radialGradient>
-
-              {/* Interior Reflector (On - Warm Incandescent Glow) */}
-              <radialGradient id="interiorReflectorOn" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="25%" stopColor="#fff7dd" />
-                <stop offset="65%" stopColor="#ffda73" />
-                <stop offset="100%" stopColor="#dca836" />
-              </radialGradient>
-            </defs>
-
-            {/* Nordic Conical Bell Body (Outer Matte Black Shell) */}
-            <path
-              d="M 87,0 
-                 C 87,22 15,70 5,95 
-                 C 35,115 155,115 185,95 
-                 C 175,70 103,22 103,0 
-                 Z"
-              fill="url(#matteBlackShade)"
-              stroke="#0a0a0c"
-              strokeWidth="0.8"
-            />
-
-            {/* Subtle highlight sheen along the left curve of the shade */}
-            <path
-              d="M 87,0 C 87,22 15,70 5,95"
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.16)"
-              strokeWidth="1.5"
-            />
-
-            {/* Bottom Elliptical Opening Rim & Interior View */}
-            <ellipse
-              cx="95"
-              cy="95"
-              rx="87"
-              ry="18"
-              fill={isOn ? 'url(#interiorReflectorOn)' : 'url(#interiorReflectorOff)'}
-              stroke="#222327"
-              strokeWidth="1.2"
-              filter={isOn ? 'drop-shadow(0 0 16px rgba(255, 220, 100, 0.95))' : 'none'}
-            />
-
-            {/* Inner rim ambient shadow for depth */}
-            <ellipse
-              cx="95"
-              cy="93"
-              rx="84"
-              ry="15"
-              fill="none"
-              stroke={isOn ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.12)'}
-              strokeWidth="1"
-            />
-
-            {/* Center Metallic Cord Socket Pin (где крепится шнурок) */}
-            <circle
-              cx="95"
-              cy="95"
-              r="4.5"
-              fill="#c5a059"
-              stroke="#593b08"
-              strokeWidth="0.8"
-            />
-            <circle
-              cx="95"
-              cy="95"
-              r="2"
-              fill="#222"
-            />
-          </svg>
-        </div>
-      </div>
-
-      {/* 
-        ========================================================================
-        3. PULL CORD WITH WOODEN RING & REAL PENDULUM PHYSICS
+        2. UNIFIED PRECISION SVG: PENDANT CEILING LAMP & PULL CORD
+        All components share the exact same coordinate space (x = 110 center axis)
         ========================================================================
       */}
       <svg
-        className="absolute top-0 left-0 w-full h-full pointer-events-none z-30 overflow-visible"
-        style={{ width: '220px', height: '360px' }}
+        viewBox="0 0 220 450"
+        className="w-full h-full overflow-visible drop-shadow-2xl z-10"
+        style={{ width: '220px', height: '450px' }}
       >
         <defs>
-          {/* Wooden Ring Texture Gradient (matching top wooden neck) */}
-          <radialGradient id="woodenRingGrad" cx="40%" cy="35%" r="65%">
+          {/* Matte Black Shade Exterior Gradient */}
+          <linearGradient id="matteBlackShade" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#151619" />
+            <stop offset="18%" stopColor="#282a30" />
+            <stop offset="46%" stopColor="#3d4047" />
+            <stop offset="68%" stopColor="#282a30" />
+            <stop offset="100%" stopColor="#121315" />
+          </linearGradient>
+
+          {/* Wooden Top Neck Gradient */}
+          <linearGradient id="woodenNeckGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#8a5d2e" />
+            <stop offset="25%" stopColor="#ba8a4d" />
+            <stop offset="50%" stopColor="#dfb778" />
+            <stop offset="75%" stopColor="#ba8a4d" />
+            <stop offset="100%" stopColor="#7a4f24" />
+          </linearGradient>
+
+          {/* Wooden Ring Texture Gradient */}
+          <radialGradient id="woodenRingGrad" cx="35%" cy="30%" r="70%">
             <stop offset="0%" stopColor="#f3d5a5" />
             <stop offset="35%" stopColor="#cf9e62" />
             <stop offset="70%" stopColor="#9c6832" />
             <stop offset="100%" stopColor="#5c3814" />
           </radialGradient>
+
+          {/* Interior Reflector (Off) */}
+          <radialGradient id="interiorReflectorOff" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#fff8ed" />
+            <stop offset="60%" stopColor="#ebdcc7" />
+            <stop offset="100%" stopColor="#c7b49a" />
+          </radialGradient>
+
+          {/* Interior Reflector (On - Warm Incandescent Glow) */}
+          <radialGradient id="interiorReflectorOn" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="25%" stopColor="#fff7dd" />
+            <stop offset="65%" stopColor="#ffda73" />
+            <stop offset="100%" stopColor="#dca836" />
+          </radialGradient>
+
+          {/* Drop shadow for the wooden ring */}
           <filter id="ringShadow" x="-50%" y="-50%" width="200%" height="200%">
             <feDropShadow dx="1" dy="4" stdDeviation="3" floodColor="#000" floodOpacity="0.75" />
           </filter>
         </defs>
 
-        {/* Thin Silver/White Hanging Cord from Center Socket */}
+        {/* 2.1 Ceiling Mount Canopy (Черная конусная чаша крепления к потолку) */}
+        <polygon
+          points="97,0 123,0 114,18 106,18"
+          fill="url(#matteBlackShade)"
+          stroke="#0e0f11"
+          strokeWidth="0.8"
+        />
+
+        {/* 2.2 Ceiling Cable (Черный подвесной провод) */}
+        <line
+          x1="110"
+          y1="18"
+          x2="110"
+          y2="88"
+          stroke="#1b1c20"
+          strokeWidth="2.8"
+          strokeLinecap="round"
+        />
+        <line
+          x1="110.3"
+          y1="18"
+          x2="110.3"
+          y2="88"
+          stroke="rgba(255, 255, 255, 0.15)"
+          strokeWidth="0.8"
+        />
+
+        {/* 2.3 Wooden Socket / Neck Cap (Деревянная вставка из светлого дуба) */}
+        <rect
+          x="103"
+          y="88"
+          width="14"
+          height="28"
+          rx="3.5"
+          fill="url(#woodenNeckGrad)"
+          stroke="#5c3814"
+          strokeWidth="0.8"
+        />
+
+        {/* 2.4 Pendant Lampshade Group (Clickable to Toggle) */}
+        <g
+          onClick={handleClickShade}
+          className="cursor-pointer"
+        >
+          {/* Nordic Conical Bell Body (Outer Matte Black Shell) */}
+          <path
+            d="M 101,116 
+               C 101,145 28,190 20,215 
+               C 50,233 170,233 200,215 
+               C 192,190 119,145 119,116 
+               Z"
+            fill="url(#matteBlackShade)"
+            stroke="#0a0a0c"
+            strokeWidth="0.8"
+          />
+
+          {/* Subtle highlight sheen along the left curve of the shade */}
+          <path
+            d="M 101,116 C 101,145 28,190 20,215"
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.16)"
+            strokeWidth="1.5"
+          />
+
+          {/* Bottom Elliptical Opening Rim & Interior Diffuser */}
+          <ellipse
+            cx="110"
+            cy="215"
+            rx="90"
+            ry="18"
+            fill={isOn ? 'url(#interiorReflectorOn)' : 'url(#interiorReflectorOff)'}
+            stroke="#222327"
+            strokeWidth="1.2"
+            filter={isOn ? 'drop-shadow(0 0 18px rgba(255, 220, 100, 0.95))' : 'none'}
+          />
+
+          {/* Inner rim ambient shadow for 3D depth */}
+          <ellipse
+            cx="110"
+            cy="213"
+            rx="87"
+            ry="15"
+            fill="none"
+            stroke={isOn ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.12)'}
+            strokeWidth="1"
+          />
+
+          {/* Center Metallic Cord Socket Pin (где точно крепится шнурок) */}
+          <circle
+            cx={ANCHOR_X}
+            cy={ANCHOR_Y}
+            r="4.5"
+            fill="#c5a059"
+            stroke="#593b08"
+            strokeWidth="0.8"
+          />
+          <circle
+            cx={ANCHOR_X}
+            cy={ANCHOR_Y}
+            r="2"
+            fill="#222"
+          />
+        </g>
+
+        {/* 
+          ======================================================================
+          2.5 HANGING PULL CORD & WOODEN RING
+          Connected directly to the center socket pin (ANCHOR_X, ANCHOR_Y)
+          ======================================================================
+        */}
+        {/* The braided pull cord line */}
         <line
           x1={ANCHOR_X}
           y1={ANCHOR_Y}
           x2={tipX}
           y2={tipY}
-          stroke={isOn ? '#fffaed' : '#dcdcdc'}
+          stroke={isOn ? '#fffaed' : '#e6e6e6'}
           strokeWidth="1.8"
           strokeLinecap="round"
+          filter="drop-shadow(0 2px 3px rgba(0,0,0,0.4))"
         />
 
-        {/* Small brass knot/fitting holding the wooden ring */}
-        <circle
-          cx={tipX}
-          cy={tipY}
-          r="2.5"
-          fill="#c5a059"
-          stroke="#422907"
-          strokeWidth="0.6"
-        />
-
-        {/* Wooden O-Ring Handle at Bottom of Cord (From Photo) */}
+        {/* Wooden O-Ring Handle & Brass Collar at the tip */}
         <g
-          transform={`translate(${tipX}, ${tipY + 12}) rotate(${ringRotationDeg})`}
+          transform={`translate(${tipX}, ${tipY}) rotate(${ringRotationDeg})`}
           filter="url(#ringShadow)"
         >
+          {/* Brass Collar at top of ring (holds cord seamlessly) */}
+          <circle
+            cx="0"
+            cy="0"
+            r="2.5"
+            fill="#d4af37"
+            stroke="#422907"
+            strokeWidth="0.6"
+          />
+
           {/* Subtle warm halo when lamp is ON */}
           {isOn && (
-            <circle
+            <ellipse
               cx="0"
-              cy="0"
-              r="14"
+              cy="11.5"
+              rx="13"
+              ry="16"
               fill="rgba(255, 235, 170, 0.25)"
             />
           )}
 
-          {/* Wooden O-Ring Outer Body */}
-          <circle
+          {/* Wooden O-Ring Body (Outer Oval) */}
+          <ellipse
             cx="0"
-            cy="0"
-            r="10.5"
+            cy="11.5"
+            rx="8"
+            ry="11.5"
             fill="url(#woodenRingGrad)"
             stroke="#4a2c0c"
             strokeWidth="0.8"
           />
 
           {/* Wooden O-Ring Center Cutout Hole */}
-          <circle
+          <ellipse
             cx="0"
-            cy="0"
-            r="5"
+            cy="11.5"
+            rx="4.2"
+            ry="7"
             fill="#121316"
             stroke="#3b2108"
             strokeWidth="0.6"
           />
         </g>
-      </svg>
 
-      {/* Expanded Pointer Hitbox around the Wooden Ring for Easy Touch/Pull */}
-      <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onClick={handleClickRing}
-        title="Потяните за кольцо (шнурок с физикой)"
-        className="absolute z-40 touch-none cursor-grab active:cursor-grabbing rounded-full"
-        style={{
-          left: `${tipX - 22}px`,
-          top: `${tipY - 10}px`,
-          width: '44px',
-          height: '48px',
-          transform: isDragging ? 'scale(1.18)' : 'scale(1)',
-          transition: isDragging ? 'none' : 'transform 0.15s ease-out'
-        }}
-      />
+        {/* Invisible expanded hit line covering the cord itself for easy grabbing */}
+        <line
+          x1={ANCHOR_X}
+          y1={ANCHOR_Y}
+          x2={tipX}
+          y2={tipY}
+          stroke="transparent"
+          strokeWidth="20"
+          style={{ touchAction: 'none', cursor: isDragging ? 'grabbing' : 'grab' }}
+          onPointerDown={handlePointerDown}
+        />
+
+        {/* 
+          Interactive Hitbox: perfectly centered on the wooden ring in SVG coordinates
+        */}
+        <circle
+          cx={tipX}
+          cy={tipY + 11.5}
+          r="32"
+          fill="transparent"
+          className="cursor-grab active:cursor-grabbing"
+          style={{ touchAction: 'none' }}
+          onPointerDown={handlePointerDown}
+          onClick={handleClickRing}
+        />
+      </svg>
 
       {/* Helpful Subtle Hint when Lamp is OFF */}
       {!isOn && (
-        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap animate-pulse text-[11px] text-amber-200/80 font-medium select-none pointer-events-none">
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap animate-pulse text-[11px] text-amber-200/80 font-medium select-none pointer-events-none z-20">
           💡 Потяните за кольцо
         </div>
       )}
