@@ -37,6 +37,7 @@ app.post('/api/auth/register', authController.register);
 app.post('/api/auth/verify-telegram', authController.verifyTelegram);
 app.get('/api/auth/check-status', authController.checkStatus);
 app.post('/api/auth/resend-code', authController.resendCode);
+app.get('/api/auth/me', authController.getMe);
 
 // Healthcheck
 app.get('/api/health', (req, res) => {

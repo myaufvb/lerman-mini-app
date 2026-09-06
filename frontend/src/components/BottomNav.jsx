@@ -151,10 +151,10 @@ export function BottomNav({ activeTab, setActiveTab, unreadTicketsCount, offline
               className="apple-liquid-bubble absolute top-1.5 bottom-1.5 rounded-2xl pointer-events-none will-change-transform z-0"
               style={{
                 width: `${tabWidth}px`,
-                transform: `translateX(${bubbleOffset}px) scaleX(${stretch.x}) scaleY(${stretch.y})`,
+                transform: `translate3d(${bubbleOffset}px, 0, 0) scaleX(${stretch.x}) scaleY(${stretch.y})`,
                 transition: isDragging 
                   ? 'none' 
-                  : 'transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.25)'
+                  : 'transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1)'
               }}
             >
               {/* Inner specular glossy highlight */}
@@ -177,7 +177,7 @@ export function BottomNav({ activeTab, setActiveTab, unreadTicketsCount, offline
                   onHaptic?.();
                   setActiveTab(tab.id);
                 }}
-                className={`relative flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all duration-200 z-10 ${
+                className={`relative flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-colors duration-150 z-10 ${
                   isActive || isHovered
                     ? 'text-white'
                     : 'text-slate-400 hover:text-slate-200'
@@ -185,9 +185,9 @@ export function BottomNav({ activeTab, setActiveTab, unreadTicketsCount, offline
               >
                 <div className="relative flex items-center justify-center">
                   <Icon 
-                    className={`w-5 h-5 transition-all duration-300 ${
+                    className={`w-5 h-5 transition-transform duration-150 ${
                       isActive || isHovered
-                        ? 'scale-110 text-cyan-300 drop-shadow-[0_0_10px_rgba(0,242,254,0.7)] stroke-[2.4]'
+                        ? 'scale-110 text-cyan-300 stroke-[2.2]'
                         : 'stroke-[1.8]'
                     }`} 
                   />

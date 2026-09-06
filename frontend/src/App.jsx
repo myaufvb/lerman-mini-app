@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTelegram } from './hooks/useTelegram';
 import { api } from './services/api';
+import { storageService } from './services/storage';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { CyberCanvasWallpaper } from './components/CyberCanvasWallpaper';
@@ -25,27 +26,47 @@ import { NewTicketModal } from './components/NewTicketModal';
 export default function App() {
   const { user, isInsideTelegram, haptic } = useTelegram();
 
-  // Auth State
+  // Multi-tier Persistent Auth State (survives page refreshes & Telegram WebView reloads)
   const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('lerman_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
+    return storageService.getUser();
   });
 
   const handleLoginSuccess = (userData, token) => {
     setCurrentUser(userData);
-    localStorage.setItem('lerman_user', JSON.stringify(userData));
-    localStorage.setItem('lerman_token', token);
+    storageService.saveSession(userData, token);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('lerman_user');
-    localStorage.removeItem('lerman_token');
+    storageService.clearSession();
   };
+
+  // Restore session from Telegram CloudStorage if local storage was sandboxed on reload
+  useEffect(() => {
+    if (!currentUser) {
+      storageService.restoreFromTelegramCloud().then(session => {
+        if (session?.user) {
+          setCurrentUser(session.user);
+          storageService.saveSession(session.user, session.token);
+        }
+      });
+    }
+  }, [currentUser]);
+
+  // Validate and refresh session silently from backend if token exists
+  useEffect(() => {
+    const token = storageService.getToken();
+    if (token) {
+      api.getMe().then(res => {
+        if (res?.success && res.user) {
+          setCurrentUser(res.user);
+          storageService.saveSession(res.user, token);
+        }
+      }).catch(err => {
+        console.warn('Session check:', err?.message || err);
+      });
+    }
+  }, []);
 
   // App Data State
   const [projects, setProjects] = useState([]);
@@ -192,7 +213,7 @@ export default function App() {
         )}
 
         {/* 5. Cyber Darkening Contrast Overlay */}
-        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px]" />
+        <div className="absolute inset-0 bg-slate-950/50" />
 
         {/* 6. Cyber Grid Dot Texture */}
         <div 

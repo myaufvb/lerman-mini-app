@@ -4,6 +4,7 @@ import { telegramBot } from '../bot/telegramBot.js';
 import crypto from 'crypto';
 
 export const pendingAuthSessions = new Map(); // sessionId -> { code, user, expiresAt, approved, token, targetChatId }
+export const activeSessions = new Map(); // token -> { userId, user, createdAt }
 
 export const authController = {
   getPendingSession(id) {
@@ -119,6 +120,11 @@ export const authController = {
     const enteredCode = (code || '').trim();
     if (session.approved || session.code === enteredCode) {
       pendingAuthSessions.delete(authSessionId);
+      activeSessions.set(session.token, {
+        userId: session.user.id,
+        user: session.user,
+        createdAt: Date.now()
+      });
       return res.json({
         success: true,
         token: session.token,
@@ -147,6 +153,11 @@ export const authController = {
 
     if (session.approved) {
       pendingAuthSessions.delete(authSessionId);
+      activeSessions.set(session.token, {
+        userId: session.user.id,
+        user: session.user,
+        createdAt: Date.now()
+      });
       return res.json({
         success: true,
         approved: true,
@@ -206,16 +217,64 @@ export const authController = {
     });
 
     const token = `lerman_sess_${crypto.randomBytes(16).toString('hex')}`;
+    const userData = {
+      id: newUser.id,
+      name: newUser.name,
+      login: newUser.login,
+      phone: newUser.phone,
+      role: newUser.role
+    };
+
+    activeSessions.set(token, {
+      userId: newUser.id,
+      user: userData,
+      createdAt: Date.now()
+    });
+
     res.status(201).json({
       success: true,
       token,
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        login: newUser.login,
-        phone: newUser.phone,
-        role: newUser.role
-      }
+      user: userData
     });
+  },
+
+  getMe(req, res) {
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    const userId = req.headers['x-user-id'] || req.query.userId;
+    const tgId = req.headers['x-telegram-id'] || req.query.tgId;
+
+    const users = db.getCollection('users') || [];
+    let user = null;
+
+    if (userId) {
+      user = users.find(u => u.id === userId);
+    }
+    if (!user && tgId) {
+      user = users.find(u => String(u.telegramId) === String(tgId));
+    }
+    if (!user && token) {
+      const session = activeSessions.get(token);
+      if (session) {
+        user = users.find(u => u.id === session.userId) || session.user;
+      }
+    }
+
+    if (user) {
+      const userRole = user.role || (user.login?.toLowerCase() === 'lerman_dev' || user.login === 'admin' ? 'developer' : 'user');
+      return res.json({
+        success: true,
+        user: {
+          id: user.id,
+          name: user.name,
+          login: user.login,
+          phone: user.phone,
+          role: userRole,
+          telegramId: user.telegramId
+        }
+      });
+    }
+
+    return res.status(401).json({ success: false, error: 'Сессия не найдена или истекла' });
   }
 };

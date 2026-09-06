@@ -1,10 +1,17 @@
+import { storageService } from './storage';
+
 const BASE_URL = '/api';
 
 async function request(endpoint, options = {}) {
+  const token = storageService.getToken();
+  const user = storageService.getUser();
+
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(user?.id ? { 'X-User-Id': user.id } : {}),
         ...options.headers
       },
       ...options
@@ -86,5 +93,8 @@ export const api = {
   deleteWallpaper: (id) => request(`/settings/wallpaper/${id}`, { method: 'DELETE' }),
 
   // Integrations & Snippets
-  getIntegrationGuides: (projectId) => request(`/integration/guides${projectId ? `?projectId=${projectId}` : ''}`)
+  getIntegrationGuides: (projectId) => request(`/integration/guides${projectId ? `?projectId=${projectId}` : ''}`),
+
+  // Auth session check
+  getMe: () => request('/auth/me')
 };
