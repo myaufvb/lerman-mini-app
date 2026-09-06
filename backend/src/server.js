@@ -34,6 +34,9 @@ app.use('/uploads', express.static(config.uploadDir));
 // Auth
 app.post('/api/auth/login', authController.login);
 app.post('/api/auth/register', authController.register);
+app.post('/api/auth/verify-telegram', authController.verifyTelegram);
+app.get('/api/auth/check-status', authController.checkStatus);
+app.post('/api/auth/resend-code', authController.resendCode);
 
 // Healthcheck
 app.get('/api/health', (req, res) => {

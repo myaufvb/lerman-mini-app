@@ -1,6 +1,7 @@
 import { Telegraf, Markup } from 'telegraf';
 import { config } from '../config.js';
 import { db } from '../db/database.js';
+import { pendingAuthSessions } from '../controllers/authController.js';
 
 class TelegramBotManager {
   constructor() {
@@ -322,6 +323,36 @@ class TelegramBotManager {
       this.bot.command('dev', (ctx) => this.handleDevInfo(ctx));
       this.bot.action('cmd_dev_info', (ctx) => this.handleDevInfo(ctx));
 
+      // 2FA Authorization actions for PC Login
+      this.bot.action(/^auth_allow:(.+)$/, async (ctx) => {
+        const authSessionId = ctx.match[1];
+        const session = pendingAuthSessions.get(authSessionId);
+        if (session) {
+          session.approved = true;
+          await ctx.answerCbQuery('Вход на ПК успешно разрешен! ✅');
+          await ctx.editMessageText(
+            `✅ *ВХОД НА ПК УСПЕШНО РАЗРЕШЕН!*\n\n` +
+            `👤 Пользователь: *${session.user.login}*\n` +
+            `🖥️ Статус: Сессия на ПК авторизована.\n` +
+            `⏰ Время: ${new Date().toLocaleTimeString('ru-RU')}`,
+            { parse_mode: 'Markdown' }
+          );
+        } else {
+          await ctx.answerCbQuery('Сессия истекла или уже подтверждена');
+        }
+      });
+
+      this.bot.action(/^auth_deny:(.+)$/, async (ctx) => {
+        const authSessionId = ctx.match[1];
+        pendingAuthSessions.delete(authSessionId);
+        await ctx.answerCbQuery('Вход на ПК заблокирован! 🛑');
+        await ctx.editMessageText(
+          `🛑 *ВХОД НА ПК ОТКЛОНЕН!*\n\n` +
+          `Попытка входа была заблокирована.`,
+          { parse_mode: 'Markdown' }
+        );
+      });
+
       // Inline button handlers for Support Tickets
       this.bot.action(/^tkt_work:(.+)$/, async (ctx) => {
         const ticketId = ctx.match[1];
@@ -510,6 +541,42 @@ class TelegramBotManager {
     return this.sendToAdmin(message, Markup.inlineKeyboard([
       [Markup.button.webApp('📱 Открыть Mini App', this.appUrl)]
     ]));
+  }
+
+  async sendAuthConfirmation(targetChatId, { authSessionId, code, username, role }) {
+    if (!this.bot || !targetChatId) {
+      console.log(`[AUTH 2FA] Bot not running or targetChatId empty (${targetChatId}). Code: ${code}`);
+      return false;
+    }
+
+    const roleBadge = role === 'developer' ? '⚡ Разработчик' : '👤 Пользователь';
+    const message = 
+      `🔐 *ПОДТВЕРЖДЕНИЕ ВХОДА С ПК (2FA)*\n\n` +
+      `Обнаружен вход в аккаунт через веб-браузер на компьютере.\n\n` +
+      `👤 *Пользователь:* \`${username}\`\n` +
+      `🏷️ *Статус:* ${roleBadge}\n` +
+      `⏰ *Время:* ${new Date().toLocaleTimeString('ru-RU')}\n\n` +
+      `🔑 *Ваш код подтверждения:*\n` +
+      `👉 \`${code}\`\n\n` +
+      `_Введите эти 6 цифр на компьютере или просто нажмите кнопку ниже для быстрого входа:_`;
+
+    const buttons = [
+      [
+        Markup.button.callback('✅ Разрешить вход на ПК', `auth_allow:${authSessionId}`),
+        Markup.button.callback('❌ Отклонить', `auth_deny:${authSessionId}`)
+      ]
+    ];
+
+    try {
+      await this.bot.telegram.sendMessage(targetChatId, message, {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard(buttons)
+      });
+      return true;
+    } catch (err) {
+      console.error('Ошибка отправки 2FA в Telegram:', err.message);
+      return false;
+    }
   }
 }
 
