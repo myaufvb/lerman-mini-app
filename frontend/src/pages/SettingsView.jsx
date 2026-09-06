@@ -18,33 +18,6 @@ export function SettingsView({
   onOpenWallpaperModal, 
   onHaptic 
 }) {
-  const [newPin, setNewPin] = useState('');
-  const [currentPin, setCurrentPin] = useState('');
-  const [pinSuccess, setPinSuccess] = useState(false);
-  const [pinError, setPinError] = useState('');
-
-  const handleSavePin = async (e) => {
-    e.preventDefault();
-    setPinError('');
-    if (newPin.length < 4) {
-      setPinError('PIN код должен быть от 4 цифр');
-      return;
-    }
-
-    try {
-      await api.setMasterPin(newPin, currentPin);
-      onHaptic?.notification('success');
-      setPinSuccess(true);
-      setNewPin('');
-      setCurrentPin('');
-      onSettingsUpdate({ hasMasterPin: true });
-      setTimeout(() => setPinSuccess(false), 3000);
-    } catch (err) {
-      setPinError(err.message);
-      onHaptic?.notification('error');
-    }
-  };
-
   const handleToggleNotifications = async () => {
     const nextVal = !settings.notificationsEnabled;
     onHaptic?.impact('light');
@@ -64,7 +37,7 @@ export function SettingsView({
           </h2>
         </div>
         <p className="text-xs text-slate-400">
-          Управление внешним видом, Master PIN и ботом Telegram
+          Управление внешним видом, оповещениями и профилем
         </p>
       </div>
 
@@ -92,69 +65,6 @@ export function SettingsView({
             {settings.customWallpaperUrl ? 'Кастомный фон активен' : settings.activeWallpaperId}
           </span>
         </div>
-      </div>
-
-      {/* Master PIN Protection */}
-      <div className="glass-panel rounded-3xl p-5 border border-white/10 space-y-3">
-        <div className="flex items-center gap-2">
-          <Lock className="w-5 h-5 text-rose-400" />
-          <div>
-            <h3 className="text-sm font-bold text-white">Master PIN для Сейфа (Vault)</h3>
-            <p className="text-xs text-slate-400">
-              {settings.hasMasterPin 
-                ? 'Сейф защищен PIN-кодом. Вы можете изменить его ниже.' 
-                : 'PIN не установлен. Рекомендуем задать PIN для блокировки паролей.'}
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSavePin} className="space-y-3 pt-2">
-          {settings.hasMasterPin && (
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">
-                Текущий PIN код:
-              </label>
-              <input
-                type="password"
-                maxLength={6}
-                placeholder="••••"
-                value={currentPin}
-                onChange={(e) => setCurrentPin(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-400"
-              />
-            </div>
-          )}
-
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              Новый PIN код (4-6 цифр):
-            </label>
-            <input
-              type="password"
-              maxLength={6}
-              placeholder="••••"
-              value={newPin}
-              onChange={(e) => setNewPin(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-400"
-            />
-          </div>
-
-          {pinError && (
-            <p className="text-xs text-rose-400 font-semibold">{pinError}</p>
-          )}
-          {pinSuccess && (
-            <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" /> PIN успешно сохранен!
-            </p>
-          )}
-
-          <button
-            type="submit"
-            className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-bold transition-colors"
-          >
-            {settings.hasMasterPin ? 'Изменить Master PIN' : 'Установить Master PIN'}
-          </button>
-        </form>
       </div>
 
       {/* Telegram Notifications */}

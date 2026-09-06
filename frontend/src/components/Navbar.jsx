@@ -60,34 +60,34 @@ export function Navbar({
             <Image className="w-4 h-4" />
           </button>
 
-          {/* Vault Lock indicator */}
-          {hasMasterPin && (
-            <button
-              onClick={onLockVault}
-              title={isVaultUnlocked ? 'Сейф разблокирован (нажмите для блокировки)' : 'Сейф заблокирован'}
-              className={`p-2 rounded-xl border transition-colors ${
-                isVaultUnlocked
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                  : 'bg-rose-500/15 border-rose-500/30 text-rose-400'
-              }`}
-            >
-              {isVaultUnlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-            </button>
-          )}
-
           {/* User badge & Logout */}
           <div className="flex items-center gap-2 pl-2 border-l border-white/10">
             <div className="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-xs font-bold text-cyan-400">
               {currentUser?.name?.[0] || currentUser?.login?.[0] || user?.first_name?.[0] || 'L'}
             </div>
-            <span className="hidden sm:inline text-xs font-medium text-slate-300">
-              {currentUser?.name || currentUser?.login || user?.first_name || 'Admin'}
+            <div className="hidden sm:flex flex-col items-start">
+              <span className="text-xs font-medium text-slate-300 truncate max-w-[90px]">
+                {currentUser?.name || currentUser?.login || user?.first_name || 'Admin'}
+              </span>
+              {currentUser?.role === 'developer' ? (
+                <span className="text-[9px] font-extrabold bg-gradient-to-r from-purple-400 to-amber-400 bg-clip-text text-transparent">
+                  ⚡ DEVELOPER
+                </span>
+              ) : (
+                <span className="text-[9px] text-blue-400 font-semibold">
+                  👤 CLIENT
+                </span>
+              )}
+            </div>
+            {/* Mobile role pill */}
+            <span className="sm:hidden text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
+              {currentUser?.role === 'developer' ? '⚡ DEV' : '👤 USER'}
             </span>
             {onLogout && (
               <button
                 onClick={onLogout}
                 title="Выйти из аккаунта"
-                className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs transition-colors"
+                className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs transition-colors font-medium"
               >
                 Выйти
               </button>

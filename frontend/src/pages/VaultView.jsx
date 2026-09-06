@@ -20,6 +20,7 @@ import { api } from '../services/api';
 export function VaultView({ 
   credentials, 
   projects, 
+  currentUser,
   isVaultUnlocked, 
   hasMasterPin, 
   onRequestUnlock, 
@@ -58,36 +59,38 @@ export function VaultView({
     }
   };
 
+  // If ordinary user, restrict vault access
+  if (currentUser?.role !== 'developer') {
+    return (
+      <div className="glass-panel rounded-3xl p-8 text-center max-w-md mx-auto my-12 border border-white/10 flex flex-col items-center animate-fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-4">
+          <Lock className="w-8 h-8 text-amber-400" />
+        </div>
+        <h3 className="text-base font-bold text-white mb-1">
+          Доступ только для Разработчика
+        </h3>
+        <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+          Хранилище серверных паролей, SSH-ключей и баз данных доступно только пользователям со статусом <strong className="text-amber-400">⚡ Разработчик</strong>.
+        </p>
+        <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-slate-300 w-full mb-3 flex items-center justify-between">
+          <span>Ваш текущий статус:</span>
+          <span className="font-bold text-blue-400 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+            👤 Пользователь / Клиент
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-500">
+          Обычным пользователям доступны разделы Мониторинга проектов и Технической поддержки.
+        </p>
+      </div>
+    );
+  }
+
   const filtered = credentials.filter(c => {
     const matchesProject = selectedProjectId === 'all' || c.projectId === selectedProjectId;
     const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           c.login.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesProject && matchesSearch;
   });
-
-  // If locked by Master PIN
-  if (hasMasterPin && !isVaultUnlocked) {
-    return (
-      <div className="glass-panel rounded-3xl p-8 text-center max-w-md mx-auto my-12 border border-white/10 flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mb-4">
-          <Lock className="w-8 h-8 text-rose-400" />
-        </div>
-        <h3 className="text-base font-bold text-white mb-1">
-          Сейф заблокирован
-        </h3>
-        <p className="text-xs text-slate-400 mb-6">
-          Для доступа к зашифрованным паролям и доступам введите ваш Master PIN код.
-        </p>
-        <button
-          onClick={onRequestUnlock}
-          className="w-full py-3 rounded-xl cyber-button flex items-center justify-center gap-2 text-xs uppercase tracking-wider font-bold"
-        >
-          <KeyRound className="w-4 h-4" />
-          Разблокировать Сейф
-        </button>
-      </div>
-    );
-  }
 
   const getCategoryIcon = (cat) => {
     switch (cat) {
@@ -102,6 +105,21 @@ export function VaultView({
   return (
     <div className="space-y-4 pb-24 animate-fade-in">
       
+      {/* Security Info Banner */}
+      <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 flex items-start gap-3">
+        <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 shrink-0">
+          <ShieldCheck className="w-5 h-5" />
+        </div>
+        <div>
+          <h4 className="text-xs font-bold text-white mb-0.5">
+            Зашифрованное хранилище паролей (AES-256-GCM)
+          </h4>
+          <p className="text-[11px] text-slate-300 leading-relaxed">
+            Все ваши пароли, ключи доступа и учетные записи надежно зашифрованы и хранятся в защищенном виде.
+          </p>
+        </div>
+      </div>
+
       {/* Top Controls */}
       <div className="glass-panel rounded-3xl p-5 border border-white/10">
         <div className="flex items-center justify-between gap-2 mb-3">
@@ -132,7 +150,7 @@ export function VaultView({
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4" />
-              <span>Добавить</span>
+              <span>Добавить новый пароль</span>
             </button>
           </div>
         </div>

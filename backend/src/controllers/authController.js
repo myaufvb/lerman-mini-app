@@ -23,6 +23,7 @@ export const authController = {
     }
 
     const token = `lerman_sess_${crypto.randomBytes(16).toString('hex')}`;
+    const userRole = user.role || (user.login === 'lerman_dev' || user.login === 'admin' ? 'developer' : 'user');
     res.json({
       success: true,
       token,
@@ -31,6 +32,7 @@ export const authController = {
         name: user.name,
         login: user.login,
         phone: user.phone,
+        role: userRole,
         telegramId: user.telegramId
       }
     });
@@ -54,6 +56,7 @@ export const authController = {
       password: password.trim(),
       phone: phone ? phone.trim() : '',
       name: name ? name.trim() : cleanLogin,
+      role: 'user', // regular user by default
       telegramId: ''
     });
 
@@ -65,7 +68,8 @@ export const authController = {
         id: newUser.id,
         name: newUser.name,
         login: newUser.login,
-        phone: newUser.phone
+        phone: newUser.phone,
+        role: newUser.role
       }
     });
   }

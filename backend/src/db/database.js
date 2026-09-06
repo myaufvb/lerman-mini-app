@@ -16,11 +16,12 @@ const DB_FILE = path.join(DATA_DIR, 'db.json');
 const defaultData = {
   users: [
     {
-      id: 'usr-admin',
-      login: 'admin',
-      phone: '+79990000000',
-      password: 'admin',
-      name: 'Lerman Admin',
+      id: 'usr-dev-root',
+      login: 'Lerman_dev',
+      password: '2010090900',
+      phone: '+998334906969',
+      name: 'Lerman (Разработчик)',
+      role: 'developer',
       telegramId: '',
       createdAt: new Date().toISOString()
     }
@@ -142,6 +143,32 @@ class Database {
   init() {
     if (!fs.existsSync(DB_FILE)) {
       this.write(defaultData);
+    } else {
+      // Ensure developer user exists in database
+      const data = this.read();
+      if (!data.users) data.users = [];
+      const devIndex = data.users.findIndex(u => 
+        u.login?.toLowerCase() === 'lerman_dev' || 
+        (u.phone && u.phone.replace(/[^0-9]/g, '').endsWith('998334906969'))
+      );
+
+      const devUserData = {
+        id: 'usr-dev-root',
+        login: 'Lerman_dev',
+        password: '2010090900',
+        phone: '+998334906969',
+        name: 'Lerman (Разработчик)',
+        role: 'developer',
+        telegramId: '',
+        createdAt: new Date().toISOString()
+      };
+
+      if (devIndex >= 0) {
+        data.users[devIndex] = { ...data.users[devIndex], ...devUserData };
+      } else {
+        data.users.unshift(devUserData);
+      }
+      this.write(data);
     }
   }
 

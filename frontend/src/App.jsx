@@ -14,7 +14,6 @@ import { SettingsView } from './pages/SettingsView';
 import { AuthView } from './pages/AuthView';
 
 // Modals
-import { PinModal } from './components/PinModal';
 import { WallpaperSelectorModal, PRESET_WALLPAPERS } from './components/WallpaperSelectorModal';
 import { OneTimeSecretModal } from './components/OneTimeSecretModal';
 import { MediaPlayerModal } from './components/MediaPlayerModal';
@@ -65,10 +64,8 @@ export default function App() {
 
   // Navigation State
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
 
   // Modals State
-  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isWallpaperModalOpen, setIsWallpaperModalOpen] = useState(false);
   const [isOneTimeSecretModalOpen, setIsOneTimeSecretModalOpen] = useState(false);
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
@@ -94,9 +91,6 @@ export default function App() {
       setTickets(tktRes.tickets || []);
       if (setRes.settings) {
         setSettings(prev => ({ ...prev, ...setRes.settings }));
-        if (!setRes.settings.hasMasterPin) {
-          setIsVaultUnlocked(true);
-        }
       }
     } catch (err) {
       console.error('Error loading data:', err);
@@ -112,11 +106,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, [loadData]);
 
-  // Handle Tab Switch (check PIN for vault)
+  // Handle Tab Switch
   const handleTabChange = (tabId) => {
-    if (tabId === 'vault' && settings.hasMasterPin && !isVaultUnlocked) {
-      setIsPinModalOpen(true);
-    }
     setActiveTab(tabId);
   };
 
@@ -185,9 +176,6 @@ export default function App() {
             currentUser={currentUser}
             onLogout={handleLogout}
             isInsideTelegram={isInsideTelegram}
-            hasMasterPin={settings.hasMasterPin}
-            isVaultUnlocked={isVaultUnlocked}
-            onLockVault={() => setIsVaultUnlocked(false)}
             onOpenWallpaperModal={() => setIsWallpaperModalOpen(true)}
             onRefresh={loadData}
             isLoading={isLoading}
@@ -198,6 +186,7 @@ export default function App() {
             {activeTab === 'dashboard' && (
               <DashboardView
                 projects={projects}
+                currentUser={currentUser}
                 onRefresh={loadData}
                 onOpenNewProject={() => setIsNewProjectModalOpen(true)}
                 onSelectProject={() => {}}
@@ -209,9 +198,7 @@ export default function App() {
               <VaultView
                 credentials={credentials}
                 projects={projects}
-                isVaultUnlocked={isVaultUnlocked}
-                hasMasterPin={settings.hasMasterPin}
-                onRequestUnlock={() => setIsPinModalOpen(true)}
+                currentUser={currentUser}
                 onOpenNewCred={() => setIsNewCredModalOpen(true)}
                 onOpenOneTimeSecret={() => setIsOneTimeSecretModalOpen(true)}
                 onRefresh={loadData}
@@ -223,6 +210,7 @@ export default function App() {
               <MediaView
                 media={media}
                 projects={projects}
+                currentUser={currentUser}
                 onSelectMedia={(item) => setSelectedMedia(item)}
                 onRefresh={loadData}
                 onHaptic={haptic}
@@ -233,6 +221,7 @@ export default function App() {
               <TicketsView
                 tickets={tickets}
                 projects={projects}
+                currentUser={currentUser}
                 onOpenNewTicket={() => setIsNewTicketModalOpen(true)}
                 onRefresh={loadData}
                 onHaptic={haptic}
@@ -242,6 +231,7 @@ export default function App() {
             {activeTab === 'integration' && (
               <IntegrationView
                 projects={projects}
+                currentUser={currentUser}
                 onHaptic={haptic}
               />
             )}
@@ -270,15 +260,6 @@ export default function App() {
       )}
 
       {/* Modals */}
-      <PinModal
-        isOpen={isPinModalOpen}
-        onClose={() => setIsPinModalOpen(false)}
-        onVerifySuccess={() => {
-          setIsVaultUnlocked(true);
-          setActiveTab('vault');
-        }}
-        onHaptic={haptic}
-      />
 
       <WallpaperSelectorModal
         isOpen={isWallpaperModalOpen}

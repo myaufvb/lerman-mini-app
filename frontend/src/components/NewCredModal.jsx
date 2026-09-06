@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { KeyRound, X, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { KeyRound, X, Sparkles, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { api } from '../services/api';
 
 export function NewCredModal({ isOpen, onClose, projects, onCreated, onHaptic }) {
@@ -80,6 +80,14 @@ export function NewCredModal({ isOpen, onClose, projects, onCreated, onHaptic })
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* AES-256 Encryption Security Notice */}
+        <div className="mb-4 p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 flex items-start gap-2.5">
+          <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-slate-300 leading-relaxed">
+            <strong>Безопасность данных:</strong> ваши пароли и ключи будут автоматически зашифрованы алгоритмом <strong>AES-256-GCM</strong> и храниться исключительно в зашифрованном виде.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">

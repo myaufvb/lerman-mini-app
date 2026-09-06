@@ -16,11 +16,13 @@ import { api } from '../services/api';
 
 export function DashboardView({ 
   projects, 
+  currentUser,
   onRefresh, 
   onOpenNewProject, 
   onSelectProject, 
   onHaptic 
 }) {
+  const isDev = currentUser?.role === 'developer';
   const [pingingId, setPingingId] = useState(null);
 
   const handlePing = async (id, e) => {
@@ -75,13 +77,15 @@ export function DashboardView({
               Автоматический контроль состояния всех сервисов 24/7
             </p>
           </div>
-          <button
-            onClick={onOpenNewProject}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Добавить</span>
-          </button>
+          {isDev && (
+            <button
+              onClick={onOpenNewProject}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-95 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Добавить</span>
+            </button>
+          )}
         </div>
 
         {/* 3 Metric Cards */}
@@ -204,13 +208,15 @@ export function DashboardView({
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${isPinging ? 'animate-spin text-cyan-400' : ''}`} />
                       </button>
-                      <button
-                        onClick={(e) => handleDelete(project.id, project.name, e)}
-                        title="Удалить проект"
-                        className="p-1.5 bg-white/5 hover:bg-rose-500/20 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {isDev && (
+                        <button
+                          onClick={(e) => handleDelete(project.id, project.name, e)}
+                          title="Удалить проект"
+                          className="p-1.5 bg-white/5 hover:bg-rose-500/20 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

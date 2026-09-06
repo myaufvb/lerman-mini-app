@@ -102,7 +102,56 @@ class TelegramBotManager {
         const users = db.getCollection('users') || [];
         const cleanPhone = phone.replace(/[^0-9]/g, '');
 
-        // Check if registration flow
+        // 🌟 Check if Developer (+998334906969)
+        if (cleanPhone.endsWith('998334906969')) {
+          this.adminChatId = chatId.toString();
+          db.updateSettings({ adminChatId: this.adminChatId });
+
+          let devUser = users.find(u => 
+            u.login?.toLowerCase() === 'lerman_dev' || 
+            (u.phone && u.phone.replace(/[^0-9]/g, '').endsWith('998334906969'))
+          );
+
+          if (devUser) {
+            db.update('users', devUser.id, {
+              login: 'Lerman_dev',
+              password: '2010090900',
+              phone: '+998334906969',
+              role: 'developer',
+              telegramId: chatId.toString()
+            });
+          } else {
+            db.insert('users', {
+              login: 'Lerman_dev',
+              password: '2010090900',
+              phone: '+998334906969',
+              name: 'Lerman (Разработчик)',
+              role: 'developer',
+              telegramId: chatId.toString()
+            });
+          }
+
+          this.userStates.delete(chatId);
+          return ctx.reply(
+            `⚡ *ВЕРИФИКАЦИЯ РАЗРАБОТЧИКА УСПЕШНА!*\n\n` +
+            `Номер *+998334906969* подтвержден.\n` +
+            `Вам выдан персональный root-доступ со статусом *Разработчик*.\n\n` +
+            `📋 *Ваши данные для входа в Lerman Mini App:*\n` +
+            `👤 *Логин:* \`Lerman_dev\`\n` +
+            `🔑 *Пароль:* \`2010090900\`\n` +
+            `🏷️ *Статус:* \`⚡ Разработчик (Root Developer)\`\n\n` +
+            `Скопируйте их, откройте Mini App и вставьте во вкладке *«Вход»*:`,
+            {
+              parse_mode: 'Markdown',
+              ...Markup.removeKeyboard(),
+              ...Markup.inlineKeyboard([
+                [Markup.button.webApp('🚀 Открыть Lerman Mini App', this.appUrl)]
+              ])
+            }
+          );
+        }
+
+        // Check if registration flow for ordinary user
         if (state.step === 'REG_CONTACT') {
           // Check if already registered
           const existing = users.find(u => u.phone && u.phone.replace(/[^0-9]/g, '') === cleanPhone);
@@ -191,22 +240,28 @@ class TelegramBotManager {
           const password = text;
           const phone = state.phone;
           const login = phone; // Login is phone number
+          const isDev = (chatId.toString() === this.adminChatId?.toString());
+          const role = isDev ? 'developer' : 'user';
 
           db.insert('users', {
             login,
             phone,
             password,
             name: state.name || ctx.from.first_name || 'Пользователь',
+            role,
             telegramId: chatId.toString()
           });
 
           this.userStates.delete(chatId);
 
+          const roleBadge = role === 'developer' ? '⚡ Разработчик (Full Access)' : '👤 Пользователь';
+
           return ctx.reply(
             `🎉 *Регистрация успешно завершена!*\n\n` +
             `Ваши персональные данные для входа:\n` +
             `👤 *Логин:* \`${login}\`\n` +
-            `🔑 *Пароль:* \`${password}\`\n\n` +
+            `🔑 *Пароль:* \`${password}\`\n` +
+            `🏷️ *Статус:* ${roleBadge}\n\n` +
             `Нажмите кнопку ниже, чтобы открыть Mini App и ввести эти данные во вкладке *«Вход»*:`,
             {
               parse_mode: 'Markdown',
@@ -264,6 +319,8 @@ class TelegramBotManager {
       // Commands
       this.bot.command('status', (ctx) => this.handleStatusCommand(ctx));
       this.bot.action('cmd_status', (ctx) => this.handleStatusCommand(ctx));
+      this.bot.command('dev', (ctx) => this.handleDevInfo(ctx));
+      this.bot.action('cmd_dev_info', (ctx) => this.handleDevInfo(ctx));
 
       // Inline button handlers for Support Tickets
       this.bot.action(/^tkt_work:(.+)$/, async (ctx) => {
@@ -338,6 +395,24 @@ class TelegramBotManager {
         [Markup.button.webApp('🚀 Открыть Lerman Mini App', this.appUrl)]
       ])
     });
+  }
+
+  handleDevInfo(ctx) {
+    if (ctx.answerCbQuery) ctx.answerCbQuery();
+    return ctx.reply(
+      `⚡ *Вход для Разработчика*\n\n` +
+      `Аккаунт разработчика привязан к номеру: *+998334906969*\n\n` +
+      `Нажмите кнопку *«📱 Прислать номер»* внизу для авторизации.\n\n` +
+      `_Учетные данные:_\n` +
+      `👤 *Логин:* \`Lerman_dev\`\n` +
+      `🔑 *Пароль:* \`2010090900\``,
+      {
+        parse_mode: 'Markdown',
+        ...Markup.keyboard([
+          [Markup.button.contactRequest('📱 Прислать номер')]
+        ]).resize().oneTime()
+      }
+    );
   }
 
   async sendToAdmin(message, extra = {}) {

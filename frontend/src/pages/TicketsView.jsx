@@ -14,10 +14,12 @@ import { api } from '../services/api';
 export function TicketsView({ 
   tickets, 
   projects, 
+  currentUser,
   onOpenNewTicket, 
   onRefresh, 
   onHaptic 
 }) {
+  const isDev = currentUser?.role === 'developer';
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterProject, setFilterProject] = useState('all');
 
@@ -87,7 +89,9 @@ export function TicketsView({
               Поддержка & Обращения
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Входящие сообщения от клиентов по всем проектам
+              {isDev 
+                ? 'Панель управления входящими обращениями клиентов'
+                : 'Связь с разработчиком и история ваших обращений'}
             </p>
           </div>
 
@@ -96,7 +100,7 @@ export function TicketsView({
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 hover:opacity-90 active:scale-95 transition-all"
           >
             <Send className="w-4 h-4" />
-            <span>Тест тикета</span>
+            <span>{isDev ? 'Создать тикет' : 'Написать нам'}</span>
           </button>
         </div>
 
@@ -180,13 +184,15 @@ export function TicketsView({
 
                   <div className="flex items-center gap-2 shrink-0">
                     {getStatusBadge(ticket.status)}
-                    <button
-                      onClick={() => handleDelete(ticket.id)}
-                      className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg transition-colors"
-                      title="Удалить"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {isDev && (
+                      <button
+                        onClick={() => handleDelete(ticket.id)}
+                        className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg transition-colors"
+                        title="Удалить"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -201,24 +207,26 @@ export function TicketsView({
                     {new Date(ticket.createdAt).toLocaleString('ru-RU')}
                   </span>
 
-                  <div className="flex items-center gap-1.5">
-                    {ticket.status !== 'in_progress' && (
-                      <button
-                        onClick={() => handleStatusChange(ticket.id, 'in_progress')}
-                        className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[10px] font-bold transition-colors"
-                      >
-                        ⚡ В работу
-                      </button>
-                    )}
-                    {ticket.status !== 'resolved' && (
-                      <button
-                        onClick={() => handleStatusChange(ticket.id, 'resolved')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold transition-colors"
-                      >
-                        ✅ Решено
-                      </button>
-                    )}
-                  </div>
+                  {isDev && (
+                    <div className="flex items-center gap-1.5">
+                      {ticket.status !== 'in_progress' && (
+                        <button
+                          onClick={() => handleStatusChange(ticket.id, 'in_progress')}
+                          className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[10px] font-bold transition-colors"
+                        >
+                          ⚡ В работу
+                        </button>
+                      )}
+                      {ticket.status !== 'resolved' && (
+                        <button
+                          onClick={() => handleStatusChange(ticket.id, 'resolved')}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold transition-colors"
+                        >
+                          ✅ Решено
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
