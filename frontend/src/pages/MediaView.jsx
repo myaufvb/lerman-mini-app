@@ -6,7 +6,8 @@ import {
   Image as ImageIcon, 
   FileVideo, 
   Calendar, 
-  Tag 
+  Tag,
+  Trash2 
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -14,6 +15,7 @@ export function MediaView({
   media, 
   projects, 
   onSelectMedia, 
+  onDeleteMedia,
   onRefresh, 
   onHaptic 
 }) {
@@ -164,11 +166,22 @@ export function MediaView({
                       </div>
                     </div>
                   ) : (
-                    <img
-                      src={item.url}
-                      alt={item.caption}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
+                    <>
+                      <img
+                        src={item.url}
+                        alt={item.caption}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          const fallback = e.target.parentElement?.querySelector('.img-fallback');
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="img-fallback hidden w-full h-full items-center justify-center bg-slate-900 text-slate-500 flex-col gap-1 p-2 text-center">
+                        <ImageIcon className="w-8 h-8 opacity-30 text-cyan-400" />
+                        <span className="text-[10px] text-slate-400">Файл удален</span>
+                      </div>
+                    </>
                   )}
 
                   {/* Type badge */}
@@ -176,6 +189,24 @@ export function MediaView({
                     {isVideo ? <FileVideo className="w-2.5 h-2.5 text-cyan-400" /> : <ImageIcon className="w-2.5 h-2.5 text-emerald-400" />}
                     {isVideo ? 'ВИДЕО' : 'ФОТО'}
                   </span>
+
+                  {/* Direct Delete button on card */}
+                  {onDeleteMedia && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Удалить файл "${item.caption || item.originalName}"?`)) {
+                          onHaptic?.notification('warning');
+                          onDeleteMedia(item.id);
+                        }
+                      }}
+                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-rose-500 text-slate-300 hover:text-white backdrop-blur-md transition-all z-20 shadow"
+                      title="Удалить файл"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Caption overlay on bottom */}

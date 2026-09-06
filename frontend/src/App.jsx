@@ -252,6 +252,7 @@ export default function App() {
                   projects={projects}
                   currentUser={currentUser}
                   onSelectMedia={(item) => setSelectedMedia(item)}
+                  onDeleteMedia={handleDeleteMedia}
                   onRefresh={loadData}
                   onHaptic={haptic}
                 />

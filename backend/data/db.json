@@ -48,20 +48,7 @@
       "createdAt": "2026-09-05T14:10:49.693Z"
     }
   ],
-  "media": [
-    {
-      "id": "med-1",
-      "projectId": "proj-1",
-      "filename": "sample-diagram.png",
-      "originalName": "Схема_архитектуры.png",
-      "mimeType": "image/png",
-      "size": 1048576,
-      "type": "image",
-      "url": "/uploads/sample-diagram.png",
-      "caption": "Диаграмма сетевой инфраструктуры RKS",
-      "createdAt": "2026-09-05T14:10:49.693Z"
-    }
-  ],
+  "media": [],
   "tickets": [
     {
       "id": "tkt-101",

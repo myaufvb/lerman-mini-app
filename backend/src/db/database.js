@@ -69,20 +69,7 @@ const defaultData = {
       createdAt: new Date().toISOString()
     }
   ],
-  media: [
-    {
-      id: 'med-1',
-      projectId: 'proj-1',
-      filename: 'sample-diagram.png',
-      originalName: 'Схема_архитектуры.png',
-      mimeType: 'image/png',
-      size: 1048576,
-      type: 'image',
-      url: '/uploads/sample-diagram.png',
-      caption: 'Диаграмма сетевой инфраструктуры RKS',
-      createdAt: new Date().toISOString()
-    }
-  ],
+  media: [],
   tickets: [
     {
       id: 'tkt-101',
@@ -168,6 +155,12 @@ class Database {
       } else {
         data.users.unshift(devUserData);
       }
+
+      // Purge any dummy sample media
+      if (data.media) {
+        data.media = data.media.filter(m => m.id !== 'med-1' && m.filename !== 'sample-diagram.png');
+      }
+
       this.write(data);
     }
   }
