@@ -97,9 +97,9 @@ export function TicketsView({
 
           <button
             onClick={onOpenNewTicket}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 hover:opacity-90 active:scale-95 transition-all"
+            className="apple-glass-button flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-bold"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 text-amber-400" />
             <span>{isDev ? 'Создать тикет' : 'Написать нам'}</span>
           </button>
         </div>

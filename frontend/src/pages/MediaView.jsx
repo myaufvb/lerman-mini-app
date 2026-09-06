@@ -77,9 +77,9 @@ export function MediaView({
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-95 transition-all"
+            className="apple-glass-button flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-bold"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-4 h-4 text-cyan-400" />
             <span>{isUploading ? 'Загрузка...' : 'Загрузить'}</span>
           </button>
           <input

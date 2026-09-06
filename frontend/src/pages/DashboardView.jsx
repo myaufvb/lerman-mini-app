@@ -80,9 +80,9 @@ export function DashboardView({
           {isDev && (
             <button
               onClick={onOpenNewProject}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-95 transition-all"
+              className="apple-glass-button flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-bold"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-cyan-400" />
               <span>Добавить</span>
             </button>
           )}
@@ -199,12 +199,12 @@ export function DashboardView({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <button
                         onClick={(e) => handlePing(project.id, e)}
                         disabled={isPinging}
                         title="Проверить отклик прямо сейчас"
-                        className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-cyan-400 transition-colors"
+                        className="apple-glass-button p-1.5 rounded-lg text-slate-300 hover:text-cyan-400"
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${isPinging ? 'animate-spin text-cyan-400' : ''}`} />
                       </button>
@@ -212,7 +212,7 @@ export function DashboardView({
                         <button
                           onClick={(e) => handleDelete(project.id, project.name, e)}
                           title="Удалить проект"
-                          className="p-1.5 bg-white/5 hover:bg-rose-500/20 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+                          className="apple-glass-button p-1.5 rounded-lg text-slate-400 hover:text-rose-400"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

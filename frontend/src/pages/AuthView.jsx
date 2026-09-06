@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, KeyRound, User, Lock, Eye, EyeOff, Smartphone, Sparkles, AlertCircle, CheckCircle2, ArrowLeft, RefreshCw, Send } from 'lucide-react';
+import { InteractivePullLamp } from '../components/InteractivePullLamp';
 
 export function AuthView({ onLoginSuccess, onHaptic }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
+  const [isLampOn, setIsLampOn] = useState(false);
   
   // Login form state
   const [loginInput, setLoginInput] = useState('');
@@ -186,8 +188,25 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-sm glass-panel-glow rounded-3xl p-6 relative overflow-hidden animate-scale-in">
+    <div className="min-h-screen flex flex-col items-center justify-start p-4 pt-1 sm:pt-4 relative overflow-hidden">
+      
+      {/* 1. Interactive Hanging Lamp with Pull Cord at Top */}
+      <InteractivePullLamp
+        isOn={isLampOn || viewMode === '2fa'}
+        onToggle={() => {
+          setIsLampOn(prev => !prev);
+        }}
+        onHaptic={onHaptic}
+      />
+
+      {/* 2. Login & Register Card (Illuminated under the lamp when ON) */}
+      <div 
+        className={`w-full max-w-sm apple-liquid-panel rounded-3xl p-6 relative overflow-hidden transition-all duration-700 mt-2 z-20 ${
+          isLampOn || viewMode === '2fa'
+            ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto shadow-2xl shadow-cyan-950/60 animate-ios-entrance'
+            : 'opacity-0 translate-y-10 scale-95 pointer-events-none'
+        }`}
+      >
         
         {/* Glowing background gradient */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none" />
@@ -313,13 +332,13 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
             </div>
 
             {/* Tab Switcher (Вход / Регистрация) */}
-            <div className="flex bg-white/5 p-1 rounded-2xl mb-5">
+            <div className="flex apple-liquid-panel p-1 rounded-2xl mb-5 border border-white/15">
               <button
                 type="button"
-                onClick={() => { setActiveTab('login'); setError(''); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                onClick={() => { setActiveTab('login'); setError(''); onHaptic?.impact('light'); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${
                   activeTab === 'login'
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-md'
+                    ? 'apple-liquid-bubble text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -327,10 +346,10 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
               </button>
               <button
                 type="button"
-                onClick={() => { setActiveTab('register'); setError(''); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                onClick={() => { setActiveTab('register'); setError(''); onHaptic?.impact('light'); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${
                   activeTab === 'register'
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-md'
+                    ? 'apple-liquid-bubble text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >

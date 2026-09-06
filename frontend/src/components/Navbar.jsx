@@ -14,22 +14,22 @@ export function Navbar({
   isLoading 
 }) {
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 px-4 py-3">
+    <header className="sticky top-0 z-40 w-full apple-liquid-panel border-b border-white/10 px-4 py-3 animate-ios-slide-down">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         
         {/* Brand & Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
-            <div className="w-full h-full bg-cyber-900 rounded-[10px] flex items-center justify-center">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
+            <div className="w-full h-full bg-[#070b14]/90 rounded-[14px] flex items-center justify-center backdrop-blur-md">
               <Shield className="w-5 h-5 text-cyan-400" />
             </div>
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-sm tracking-wide bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent uppercase">
+              <span className="font-extrabold text-sm tracking-wide bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent uppercase drop-shadow-sm">
                 Lerman Mini App
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold shadow-sm shadow-cyan-500/20">
                 PRO
               </span>
             </div>
@@ -46,7 +46,7 @@ export function Navbar({
             onClick={onRefresh}
             disabled={isLoading}
             title="Обновить данные"
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-cyan-400 border border-white/5 transition-colors"
+            className="apple-glass-button p-2 rounded-xl text-slate-300 hover:text-cyan-400"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-cyan-400' : ''}`} />
           </button>
@@ -55,14 +55,14 @@ export function Navbar({
           <button
             onClick={onOpenWallpaperModal}
             title="Обои и фон"
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-cyan-400 border border-white/5 transition-colors"
+            className="apple-glass-button p-2 rounded-xl text-slate-300 hover:text-cyan-400"
           >
             <Image className="w-4 h-4" />
           </button>
 
           {/* User badge & Logout */}
           <div className="flex items-center gap-2 pl-2 border-l border-white/10">
-            <div className="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-xs font-bold text-cyan-400">
+            <div className="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-xs font-bold text-cyan-400 shadow-sm shadow-cyan-500/30">
               {currentUser?.name?.[0] || currentUser?.login?.[0] || user?.first_name?.[0] || 'L'}
             </div>
             <div className="hidden sm:flex flex-col items-start">
@@ -80,14 +80,14 @@ export function Navbar({
               )}
             </div>
             {/* Mobile role pill */}
-            <span className="sm:hidden text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
+            <span className="sm:hidden text-[9px] font-bold px-1.5 py-0.5 rounded-lg bg-white/10 border border-white/15">
               {currentUser?.role === 'developer' ? '⚡ DEV' : '👤 USER'}
             </span>
             {onLogout && (
               <button
                 onClick={onLogout}
                 title="Выйти из аккаунта"
-                className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs transition-colors font-medium"
+                className="apple-glass-button px-2.5 py-1.5 rounded-xl text-rose-400 text-xs font-semibold hover:text-rose-300"
               >
                 Выйти
               </button>

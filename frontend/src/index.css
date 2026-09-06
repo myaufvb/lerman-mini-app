@@ -43,18 +43,180 @@
   box-shadow: 0 0 20px rgba(0, 242, 254, 0.15), 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
+/* =========================================
+   APPLE LIQUID GLASS & FLUID ANIMATIONS (iOS)
+   ========================================= */
+
+@keyframes iosEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes iosSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-24px);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes iosSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(28px);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes tabSwitchFade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.animate-ios-entrance {
+  animation: iosEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-ios-slide-down {
+  animation: iosSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-ios-slide-up {
+  animation: iosSlideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-tab-switch {
+  animation: tabSwitchFade 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Apple iPhone Liquid Glass Container */
+.apple-liquid-panel {
+  background: rgba(13, 22, 38, 0.72);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4),
+    0 12px 40px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Apple Liquid Glass Button */
+.apple-glass-button {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.3),
+    0 6px 20px -2px rgba(0, 0, 0, 0.35);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.apple-glass-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.apple-glass-button:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.08) 100%);
+  border-color: rgba(0, 242, 254, 0.4);
+  border-top-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.5),
+    0 8px 25px -2px rgba(0, 242, 254, 0.3);
+  transform: translateY(-1px);
+}
+
+.apple-glass-button:active {
+  transform: scale(0.95);
+  box-shadow: 
+    inset 0 2px 4px 0 rgba(0, 0, 0, 0.4),
+    0 2px 6px -1px rgba(0, 0, 0, 0.2);
+  transition-duration: 0.1s;
+}
+
+/* Apple Liquid Capsule / Pill for Active Tab */
+.apple-liquid-bubble {
+  background: linear-gradient(145deg, rgba(0, 242, 254, 0.3) 0%, rgba(79, 172, 254, 0.18) 50%, rgba(255, 255, 255, 0.18) 100%);
+  backdrop-filter: blur(28px) saturate(220%);
+  -webkit-backdrop-filter: blur(28px) saturate(220%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 
+    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.25),
+    0 8px 24px -3px rgba(0, 242, 254, 0.45);
+}
+
+.apple-liquid-bubble::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 12%;
+  right: 12%;
+  height: 35%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, transparent 100%);
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
 .cyber-button {
+  position: relative;
   background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
   color: #050b14;
   font-weight: 600;
-  transition: all 0.2s ease-in-out;
+  border-top: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 18px rgba(0, 242, 254, 0.35);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .cyber-button:hover {
-  box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
   transform: translateY(-1px);
 }
 .cyber-button:active {
-  transform: translateY(0);
+  transform: scale(0.95);
+  transition-duration: 0.1s;
 }
 
 .cyber-badge-online {

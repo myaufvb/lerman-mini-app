@@ -205,7 +205,7 @@ export default function App() {
       </div>
 
       {/* FOREGROUND APPLICATION CONTENT (Relative, z-10) */}
-      <div className="relative z-10 flex-1 flex flex-col">
+      <div className="relative z-10 flex-1 flex flex-col animate-ios-entrance">
         {!currentUser ? (
           <AuthView onLoginSuccess={handleLoginSuccess} onHaptic={haptic} />
         ) : (
@@ -221,8 +221,8 @@ export default function App() {
               isLoading={isLoading}
             />
 
-            {/* Main Content Area */}
-            <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+            {/* Main Content Area with fluid iOS Tab transition */}
+            <main key={activeTab} className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 animate-tab-switch">
               {activeTab === 'dashboard' && (
                 <DashboardView
                   projects={projects}
