@@ -5,6 +5,7 @@ export function Navbar({
   user, 
   currentUser,
   onLogout,
+  onGoToLanding,
   isInsideTelegram, 
   hasMasterPin, 
   isVaultUnlocked, 
@@ -19,7 +20,18 @@ export function Navbar({
         
         {/* Brand & Logo */}
         <div className="flex items-center gap-2.5">
+          {onGoToLanding && (
+            <button
+              onClick={onGoToLanding}
+              title="Перейти на интерактивный 3D-лендинг"
+              className="apple-glass-button px-2.5 py-1.5 rounded-xl text-xs font-mono text-cyan-300 hover:text-cyan-200 flex items-center gap-1 mr-1 shadow-sm"
+            >
+              <span>←</span>
+              <span className="hidden sm:inline">Лендинг</span>
+            </button>
+          )}
           <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
+
             <div className="w-full h-full bg-[#070b14]/90 rounded-[14px] flex items-center justify-center backdrop-blur-md">
               <Shield className="w-5 h-5 text-cyan-400" />
             </div>

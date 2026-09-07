@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Shield, User, Lock, Eye, EyeOff, Smartphone, Sparkles, AlertCircle, RefreshCw, Send, ArrowLeft } from 'lucide-react';
 import { InteractivePullLamp } from '../components/InteractivePullLamp';
 
-export function AuthView({ onLoginSuccess, onHaptic }) {
+export function AuthView({ onLoginSuccess, onHaptic, onGoToLanding }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
   const [isLampOn, setIsLampOn] = useState(false);
   
@@ -202,6 +202,17 @@ export function AuthView({ onLoginSuccess, onHaptic }) {
           opacity: 1
         }}
       />
+
+      {/* Return to Landing Button */}
+      {onGoToLanding && (
+        <button
+          onClick={onGoToLanding}
+          className="absolute top-4 left-4 z-30 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-mono transition-all backdrop-blur-md shadow-md"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
+          <span>← На 3D-лендинг</span>
+        </button>
+      )}
 
       {/* Main Container: Pendant Lamp on the Left, Login Form on the Right */}
       <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-10 md:gap-20 w-full max-w-5xl py-6 md:py-10">

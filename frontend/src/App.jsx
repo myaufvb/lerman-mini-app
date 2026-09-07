@@ -14,6 +14,7 @@ import { TicketsView } from './pages/TicketsView';
 import { IntegrationView } from './pages/IntegrationView';
 import { SettingsView } from './pages/SettingsView';
 import { AuthView } from './pages/AuthView';
+import { LandingPage } from './pages/LandingPage';
 
 // Modals
 import { WallpaperSelectorModal, PRESET_WALLPAPERS, PRESET_LIVE_WALLPAPERS } from './components/WallpaperSelectorModal';
@@ -25,6 +26,26 @@ import { NewTicketModal } from './components/NewTicketModal';
 
 export default function App() {
   const { user, isInsideTelegram, haptic } = useTelegram();
+
+  // View state: 'landing' for 3D showcase landing, 'app' for dashboard/vault/mini-app
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash === '#app' || hash === '#dashboard') return 'app';
+      if (hash === '#landing') return 'landing';
+    }
+    return 'landing';
+  });
+
+  const handleLaunchApp = () => {
+    setViewMode('app');
+    window.location.hash = '#app';
+  };
+
+  const handleGoToLanding = () => {
+    setViewMode('landing');
+    window.location.hash = '#landing';
+  };
 
   // Multi-tier Persistent Auth State (survives page refreshes & Telegram WebView reloads)
   const [currentUser, setCurrentUser] = useState(() => {
@@ -162,6 +183,17 @@ export default function App() {
   const unreadTickets = tickets.filter(t => t.status === 'new').length;
   const offlineProjects = projects.filter(p => p.status === 'offline').length;
 
+  // 1. Interactive 3D Showcase Landing Page Mode
+  if (viewMode === 'landing') {
+    return (
+      <LandingPage
+        onLaunchApp={handleLaunchApp}
+        isInsideTelegram={isInsideTelegram}
+      />
+    );
+  }
+
+  // 2. Application Console Mode (Auth / Dashboard / Mini App)
   return (
     <div
       className="min-h-screen text-slate-100 flex flex-col relative transition-colors duration-300 bg-[#050914]"
@@ -228,7 +260,7 @@ export default function App() {
       {/* FOREGROUND APPLICATION CONTENT (Relative, z-10) */}
       <div className="relative z-10 flex-1 flex flex-col animate-ios-entrance">
         {!currentUser ? (
-          <AuthView onLoginSuccess={handleLoginSuccess} onHaptic={haptic} />
+          <AuthView onLoginSuccess={handleLoginSuccess} onHaptic={haptic} onGoToLanding={handleGoToLanding} />
         ) : (
           <>
             {/* Top Navbar */}
@@ -236,6 +268,7 @@ export default function App() {
               user={user}
               currentUser={currentUser}
               onLogout={handleLogout}
+              onGoToLanding={handleGoToLanding}
               isInsideTelegram={isInsideTelegram}
               onOpenWallpaperModal={() => setIsWallpaperModalOpen(true)}
               onRefresh={loadData}

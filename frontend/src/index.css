@@ -223,3 +223,61 @@
   border: 1px solid rgba(239, 68, 68, 0.4);
   color: #f87171;
 }
+
+/* Lenis smooth scrolling integration */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* 3D Transform Presets */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.perspective-1200 {
+  perspective: 1200px;
+}
+.perspective-1500 {
+  perspective: 1500px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Cyber Hologram & Spotlight Glow helpers */
+.cyber-glow-cyan {
+  box-shadow: 0 0 35px -5px rgba(0, 242, 254, 0.35);
+}
+.cyber-glow-purple {
+  box-shadow: 0 0 35px -5px rgba(138, 43, 226, 0.35);
+}
+.cyber-glow-neon {
+  box-shadow: 0 0 35px -5px rgba(0, 255, 204, 0.35);
+}
+
+/* Scanline and Cyber Grid texture */
+.cyber-grid-overlay {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
